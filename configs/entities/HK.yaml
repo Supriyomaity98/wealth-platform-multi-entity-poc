@@ -1,0 +1,19 @@
+# Entity configuration — Hong Kong (HK)
+
+entity_id: "HK"
+entity_full_name: "ACME Wealth Management Limited (Hong Kong)"
+currency: "HKD"
+fee_schedule_bps: 40
+min_portfolio_threshold: 200000
+default_locale: "zh_HK"
+booking_centre: "Hong Kong"
+data_region: "East Asia"
+kms_vault_name: "kv-hk-ea"
+suitability_framework: "SFC_COP_2019"
+regulatory_bodies:
+  - "SFC"
+  - "HKMA"
+  - "PDPO"
+disclosure_locale_map:
+  zh: "disclosures/zh_HK/"
+  en: "disclosures/en_HK/"
