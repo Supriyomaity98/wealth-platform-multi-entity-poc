@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r python/requirements.txt
+      - run: pytest python/tests/ -v
+
+  java-compile:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - run: mvn -B compile
+        working-directory: java
+
+  cobol-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check IDENTIFICATION DIVISION
+        run: grep -q "IDENTIFICATION DIVISION" cobol/PORTVAL.cbl
+      - name: Check PROCEDURE DIVISION
+        run: grep -q "PROCEDURE DIVISION" cobol/PORTVAL.cbl

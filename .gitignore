@@ -1,0 +1,29 @@
+# Java
+target/
+*.class
+*.jar
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# COBOL
+*.o
+*.so
+*.dylib
+
+# SQL
+*.sqlite
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
