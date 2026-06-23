@@ -1,0 +1,65 @@
+# Entity manifest for SG - test fixture only. No real secrets.
+# Production secret loaded from ${KEYVAULT:wealth-sg-manifest}
+entity_id: SG
+currency: SGD
+locale_primary: en_SG
+locale_supported: en_SG
+fee_bps: 50
+relationship_threshold_amount: 250000
+large_position_threshold: 250000
+data_region: ap-southeast-1
+kv_vault_name: wealth-sg
+kv_vault_uri: ${KEYVAULT:wealth-sg-manifest}
+regulator: MAS
+suitability_framework: MAS_FAA_2002
+booking_centre: Singapore
+disclosure_locale_required: Y
+cross_border_consent_required: N
+data_residency_strict: Y
+multilingual_documents_required: N
+audit_log_retention_days: 2555
+schema_entity_id_enforced: Y
+---
+# Entity manifest for HK - test fixture only. No real secrets.
+# Production secret loaded from ${KEYVAULT:wealth-hk-manifest}
+entity_id: HK
+currency: HKD
+locale_primary: en_HK
+locale_supported: en_HK
+fee_bps: 60
+relationship_threshold_amount: 1000000
+large_position_threshold: 1000000
+data_region: ap-east-1
+kv_vault_name: wealth-hk
+kv_vault_uri: ${KEYVAULT:wealth-hk-manifest}
+regulator: SFC
+suitability_framework: SFC_COP_2019
+booking_centre: Hong Kong
+disclosure_locale_required: Y
+cross_border_consent_required: Y
+data_residency_strict: Y
+multilingual_documents_required: N
+audit_log_retention_days: 2555
+schema_entity_id_enforced: Y
+---
+# Entity manifest for CH - test fixture only. No real secrets.
+# Production secret loaded from ${KEYVAULT:wealth-ch-manifest}
+entity_id: CH
+currency: CHF
+locale_primary: de_CH
+locale_supported: de_CH,fr_CH,it_CH
+fee_bps: 80
+relationship_threshold_amount: 5000000
+large_position_threshold: 5000000
+data_region: eu-central-1
+kv_vault_name: wealth-ch
+kv_vault_uri: ${KEYVAULT:wealth-ch-manifest}
+regulator: FINMA
+suitability_framework: FINMA_LSFin_2020
+booking_centre: Zurich
+disclosure_locale_required: Y
+cross_border_consent_required: Y
+data_residency_strict: Y
+multilingual_documents_required: Y
+audit_log_retention_days: 3650
+schema_entity_id_enforced: Y
