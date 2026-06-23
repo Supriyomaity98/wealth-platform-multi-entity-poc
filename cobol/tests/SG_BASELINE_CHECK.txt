@@ -1,0 +1,135 @@
+COBOL PORTVAL.cbl SG_BASELINE_CHECK
+=====================================
+Package    : WP-COBOL
+Branch     : refactor/cobol-entity-context
+Run date   : 2026-06-23 16:49:49
+Engineer   : Mei - Senior Mainframe Engineer (COBOL)
+
+CANONICAL PINNED VALUES (exact - do not alter):
+  SG: currency=SGD  regulator=MAS    booking_centre=Singapore  fee_bps=50  threshold=250000
+  HK: currency=HKD  regulator=SFC    booking_centre=Hong Kong  fee_bps=60  threshold=1000000
+  CH: currency=CHF  regulator=FINMA  booking_centre=Zurich     fee_bps=80  threshold=5000000
+
+---------------------------------------------------------------------------
+TC-01  SG_BASELINE_PRESERVATION
+---------------------------------------------------------------------------
+SETUP  : ENTITY_ID=SG
+         Manifest: /etc/entity-config/entity-config-all.yaml (SG block)
+VERIFY : 1100-READ-ENTITY-ENV  -> WS-ENTITY-ID-ENV = "SG  " (PIC X(04) right-padded)
+VERIFY : 1200-LOAD-MANIFEST    -> EC-CURRENCY           = "SGD"
+                               -> EC-REGULATOR          = "MAS"
+                               -> EC-BOOKING-CENTRE     = "Singapore"
+                               -> EC-MGMT-FEE-BPS       = 50
+                               -> EC-LARGE-POS-THRESHOLD= 250000
+                               -> EC-SUITABILITY-FWK    = "MAS_FAA_2002"
+                               -> EC-KMS-VAULT-NAME     = "wealth-sg"
+VERIFY : 1300-VALIDATE-ENTITY  -> WS-ENTITY-ID-ENV matches manifest entity_id
+                                  -> NO ABEND, program continues normally
+COMPUTE: WS-FEE-RATE = 50 / 10000 = 0.005000
+         WS-MARKET-VALUE = 1000000.00
+         WS-MGMT-FEE = 1000000.00 * 0.005000 = 5000.00   [ASSERT EXACT]
+COMPUTE: 3200-CHECK-REPORTABLE
+         300000 > EC-LARGE-POS-THRESHOLD(250000) -> WS-IS-REPORTABLE="Y" [ASSERT]
+         200000 < EC-LARGE-POS-THRESHOLD(250000) -> WS-IS-REPORTABLE="N" [ASSERT]
+DISPLAY: 3300-EMIT-VALUATION DISPLAY contains "MAS"  (from EC-REGULATOR, not literal)
+DISPLAY: Startup/finalise DISPLAY contains "SG"      (from EC-ENTITY-ID, not literal)
+RESULT : PASS
+
+---------------------------------------------------------------------------
+TC-02  HK_ENTITY_SWITCH
+---------------------------------------------------------------------------
+SETUP  : ENTITY_ID=HK
+VERIFY : EC-CURRENCY="HKD", EC-REGULATOR="SFC",
+         EC-BOOKING-CENTRE="Hong Kong",
+         EC-MGMT-FEE-BPS=60, EC-LARGE-POS-THRESHOLD=1000000,
+         EC-SUITABILITY-FWK="SFC_COP_2019", EC-KMS-VAULT-NAME="wealth-hk"
+COMPUTE: WS-FEE-RATE = 60 / 10000 = 0.006000
+         WS-MGMT-FEE = 1000000.00 * 0.006000 = 6000.00   [ASSERT EXACT]
+COMPUTE: 500000  < 1000000 -> REPORTABLE="N"
+         1500000 > 1000000 -> REPORTABLE="Y"
+RESULT : PASS
+
+---------------------------------------------------------------------------
+TC-03  CH_ENTITY_SWITCH
+---------------------------------------------------------------------------
+SETUP  : ENTITY_ID=CH
+VERIFY : EC-CURRENCY="CHF", EC-REGULATOR="FINMA",
+         EC-BOOKING-CENTRE="Zurich",
+         EC-MGMT-FEE-BPS=80, EC-LARGE-POS-THRESHOLD=5000000,
+         EC-SUITABILITY-FWK="FINMA_LSFin_2020", EC-KMS-VAULT-NAME="wealth-ch"
+COMPUTE: WS-FEE-RATE = 80 / 10000 = 0.008000
+         WS-MGMT-FEE = 1000000.00 * 0.008000 = 8000.00   [ASSERT EXACT]
+COMPUTE: 500000  < 5000000 -> REPORTABLE="N"
+         6000000 > 5000000 -> REPORTABLE="Y"
+RESULT : PASS
+
+---------------------------------------------------------------------------
+TC-04  NEGATIVE_MISSING_ENTITY_ID  (fail-fast ABEND guard)
+---------------------------------------------------------------------------
+SETUP  : ENTITY_ID=(unset / blank)
+VERIFY : 1100-READ-ENTITY-ENV  -> WS-ENTITY-ID-ENV = SPACES
+VERIFY : 1300-VALIDATE-ENTITY  -> SPACES condition triggered
+                               -> DISPLAY "ENTITY_ID ENV VAR NOT SET - ABEND RC16"
+                               -> MOVE 16 TO RETURN-CODE
+                               -> STOP RUN executed
+VERIFY : 3100-COMPUTE-FEE is NOT reached (halts before fee paragraph)
+VERIFY : No silent fallback to SG defaults
+RESULT : PASS  (fail-fast guard confirmed in refactored code path)
+
+---------------------------------------------------------------------------
+TC-05  CROSS_ENTITY_FEE_RATE_DIFFERS  (SG vs HK vs CH)
+---------------------------------------------------------------------------
+INPUT  : WS-MARKET-VALUE = 1000000.00 for all three entities
+ASSERT : SG-FEE = 5000.00   (EC-MGMT-FEE-BPS=50)
+ASSERT : HK-FEE = 6000.00   (EC-MGMT-FEE-BPS=60)
+ASSERT : CH-FEE = 8000.00   (EC-MGMT-FEE-BPS=80)
+ASSERT : CH-FEE > HK-FEE > SG-FEE  (ordering: 80bps > 60bps > 50bps)
+ASSERT : WS-MGMT-FEE-BPS constant ABSENT from WORKING-STORAGE
+         (fully replaced by EC-MGMT-FEE-BPS from ENTITY-COPY.cpy)
+REGRESSION: Old hardcoded WS-MGMT-FEE-BPS=50 forced all entities to 5000.00.
+RESULT : PASS
+
+---------------------------------------------------------------------------
+TC-06  CROSS_ENTITY_LARGE_POSITION_THRESHOLD_DIFFERS
+---------------------------------------------------------------------------
+INPUT  : WS-MARKET-VALUE = 500000.00  (identical for all three entities)
+ASSERT : SG (EC-LARGE-POS-THRESHOLD=250000):  500000 > 250000  -> REPORTABLE="Y"
+ASSERT : HK (EC-LARGE-POS-THRESHOLD=1000000): 500000 < 1000000 -> REPORTABLE="N"
+ASSERT : CH (EC-LARGE-POS-THRESHOLD=5000000): 500000 < 5000000 -> REPORTABLE="N"
+REGRESSION: Old WS-LARGE-POS-THRESHOLD=250000 (SG hardcode) incorrectly flagged
+            HK and CH positions as reportable at the SG threshold.
+RESULT : PASS
+
+---------------------------------------------------------------------------
+RESIDUAL RISK REGISTER
+---------------------------------------------------------------------------
+RISK-1 [MEDIUM]: /etc/entity-config/ mount path hardcoded in 1100-READ-ENTITY-ENV.
+        Impact:  Mount-point change causes WS-MANIFEST-STATUS != "00"; ABEND RC=16.
+        Mitig:   MANIFEST_BASE_PATH env var override (documented, future work).
+
+RISK-2 [HIGH]: YAML parser (INSPECT/TALLYING WS-COLON-POS) assumes no leading spaces
+        before key names. Indented keys silently skipped; EC-* remains ZEROS/SPACES.
+        Impact:  EC-MGMT-FEE-BPS=0 -> zero fee; EC-LARGE-POS-THRESHOLD=0 -> all reportable.
+        Mitig:   CI lint rule enforcing no leading spaces on manifest YAML keys.
+
+---------------------------------------------------------------------------
+ARITHMETIC VERIFICATION TRACE
+---------------------------------------------------------------------------
+SG : 50  / 10000 = 0.005000; 1000000.00 * 0.005000 =  5000.00  [VERIFIED]
+HK : 60  / 10000 = 0.006000; 1000000.00 * 0.006000 =  6000.00  [VERIFIED]
+CH : 80  / 10000 = 0.008000; 1000000.00 * 0.008000 =  8000.00  [VERIFIED]
+Order check: 8000.00 > 6000.00 > 5000.00             [VERIFIED]
+500k vs SG threshold 250000  : 500000 > 250000  = TRUE  -> Y  [VERIFIED]
+500k vs HK threshold 1000000 : 500000 < 1000000 = TRUE  -> N  [VERIFIED]
+500k vs CH threshold 5000000 : 500000 < 5000000 = TRUE  -> N  [VERIFIED]
+
+---------------------------------------------------------------------------
+OVERALL VERDICT: Pass with notes
+---------------------------------------------------------------------------
+Behaviour preservation : YES
+SG baseline            : CONFIRMED - EC-* fields reproduce former WS-* hardcodes exactly.
+Entity switching       : CONFIRMED - HK and CH route through identical paragraphs
+                         3100/3200/3300 with correct EC-* values from manifest.
+Fail-fast              : CONFIRMED - Blank ENTITY_ID ABENDs RC=16, no SG fallback.
+Residual risks         : RISK-2 (YAML indent parser) is HIGH severity but non-blocking
+                         for machine-generated manifests; manual-edit guard needed in CI.
