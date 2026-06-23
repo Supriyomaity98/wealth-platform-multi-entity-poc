@@ -1,0 +1,19 @@
+# Entity configuration for Switzerland (CH)
+entity_id: "CH"
+entity_full_name: "ACME Wealth Management AG (Switzerland)"
+currency: "CHF"
+fee_schedule_bps: 30
+min_portfolio_threshold: 250000
+default_locale: "de_CH"
+booking_centre: "Zurich"
+data_region: "Switzerland North"
+kms_vault_name: "kv-ch-chn"
+suitability_framework: "FINMA_LSFin_2020"
+regulatory_bodies:
+  - "FINMA"
+  - "FADP_nDSG"
+disclosure_locale_map:
+  de: "disclosures/de_CH/"
+  fr: "disclosures/fr_CH/"
+  it: "disclosures/it_CH/"
+  en: "disclosures/en_CH/"
