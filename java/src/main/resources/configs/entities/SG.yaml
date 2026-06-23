@@ -1,0 +1,15 @@
+# Entity configuration for Singapore (SG) - baseline
+entity_id: "SG"
+entity_full_name: "ACME Wealth Management Pte Ltd (Singapore)"
+currency: "SGD"
+fee_schedule_bps: 50
+min_portfolio_threshold: 250000
+default_locale: "en_SG"
+booking_centre: "Singapore"
+data_region: "Southeast Asia"
+kms_vault_name: "kv-sg-sea"
+suitability_framework: "MAS_FAA_2002"
+regulatory_bodies:
+  - "MAS"
+disclosure_locale_map:
+  en: "disclosures/en_SG/"
