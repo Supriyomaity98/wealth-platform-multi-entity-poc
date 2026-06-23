@@ -1,0 +1,37 @@
+# Entity configuration — Hong Kong (HK)
+entity:
+  id: "HK"
+  currency: "HKD"
+  locale:
+    primary: "zh_HK"
+    supported:
+      - "zh_HK"
+      - "en_HK"
+  fee_schedule:
+    - tier: "standard"
+      fee_bps: 45
+      threshold_min_amount: 0
+      threshold_min_currency: "HKD"
+      threshold_max_amount: 1999999.99
+    - tier: "premium"
+      fee_bps: 40
+      threshold_min_amount: 2000000
+      threshold_min_currency: "HKD"
+  portfolio_minimum:
+    amount: 1000000
+    currency: "HKD"
+  data_region: "azure-east-asia"
+  kms_vault_name: "kv-wealth-hk-prod"
+  regulator:
+    - "HKMA"
+    - "SFC"
+    - "PDPO"
+  suitability_framework: "SFC_COP_2019"
+  disclosure_locale:
+    - "zh_HK"
+    - "en_HK"
+  audit_siem_workspace: "/subscriptions/.../law-wealth-hk-prod"
+  data_residency_rule: "HK client/transaction data must remain in Azure East Asia per HKMA/SFC/PDPO"
+  # Secrets — never plaintext. Use Key Vault references:
+  #   db_password: "${KEYVAULT:wealth-hk-db-password}"
+  #   api_key:     "${KEYVAULT:wealth-hk-api-key}"
