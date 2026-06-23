@@ -1,0 +1,40 @@
+# Entity configuration — Switzerland (CH)
+entity:
+  id: "CH"
+  currency: "CHF"
+  locale:
+    primary: "de_CH"
+    supported:
+      - "de_CH"
+      - "fr_CH"
+      - "it_CH"
+      - "en_CH"
+  fee_schedule:
+    - tier: "standard"
+      fee_bps: 45
+      threshold_min_amount: 0
+      threshold_min_currency: "CHF"
+      threshold_max_amount: 999999.99
+    - tier: "premium"
+      fee_bps: 40
+      threshold_min_amount: 1000000
+      threshold_min_currency: "CHF"
+  portfolio_minimum:
+    amount: 500000
+    currency: "CHF"
+  data_region: "azure-switzerland-north"
+  kms_vault_name: "kv-wealth-ch-prod"
+  regulator:
+    - "FINMA"
+    - "nDSG"
+  suitability_framework: "FINMA_OUTSOURCING_2018_3"
+  disclosure_locale:
+    - "de_CH"
+    - "fr_CH"
+    - "it_CH"
+    - "en_CH"
+  audit_siem_workspace: "/subscriptions/.../law-wealth-ch-prod"
+  data_residency_rule: "All regulated Swiss entity data must reside in Azure Switzerland North; no cross-border transfer except as per nDSG/FINMA approval"
+  # Secrets — never plaintext. Use Key Vault references:
+  #   db_password: "${KEYVAULT:wealth-ch-db-password}"
+  #   api_key:     "${KEYVAULT:wealth-ch-api-key}"
