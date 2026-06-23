@@ -31,20 +31,20 @@ public class AccountController {
         BigDecimal managementFee = marketValue.multiply(feeRate).setScale(2, RoundingMode.HALF_UP);
         boolean reportable = marketValue.compareTo(LARGE_POSITION_THRESHOLD) >= 0;
 
-        return Map.of(
-                "portfolioId", request.get("portfolioId"),
-                "entityCode", "SG",
-                "currency", CURRENCY.getCurrencyCode(),
-                "locale", LOCALE.toString(),
-                "regulator", REGULATOR,
-                "bookingCentre", BOOKING_CENTRE,
-                "marketValue", marketValue,
-                "managementFee", managementFee,
-                "managementFeeBps", MGMT_FEE_BPS,
-                "reportable", reportable,
-                "disclosure", reportable
+        return Map.ofEntries(
+                Map.entry("portfolioId", request.get("portfolioId")),
+                Map.entry("entityCode", "SG"),
+                Map.entry("currency", CURRENCY.getCurrencyCode()),
+                Map.entry("locale", LOCALE.toString()),
+                Map.entry("regulator", REGULATOR),
+                Map.entry("bookingCentre", BOOKING_CENTRE),
+                Map.entry("marketValue", marketValue),
+                Map.entry("managementFee", managementFee),
+                Map.entry("managementFeeBps", MGMT_FEE_BPS),
+                Map.entry("reportable", reportable),
+                Map.entry("disclosure", reportable
                         ? "MAS Notice FAA: Past performance is not indicative of future results."
-                        : ""
+                        : "")
         );
     }
 }
