@@ -1,0 +1,29 @@
+# Entity configuration — Singapore (SG)
+# Baseline entity: behaviour must be preserved exactly.
+entity:
+  id: "SG"
+  currency: "SGD"
+  locale:
+    primary: "en_SG"
+    supported:
+      - "en_SG"
+  fee_schedule:
+    - tier: "standard"
+      fee_bps: 50
+      threshold_min_amount: 0
+      threshold_min_currency: "SGD"
+  portfolio_minimum:
+    amount: 250000
+    currency: "SGD"
+  data_region: "azure-southeast-asia"
+  kms_vault_name: "kv-wealth-sg-prod"
+  regulator:
+    - "MAS"
+  suitability_framework: "FAA"
+  disclosure_locale:
+    - "en_SG"
+  audit_siem_workspace: "/subscriptions/.../law-wealth-sg-prod"
+  data_residency_rule: "SG client data must remain in Azure Southeast Asia per MAS TRM Guidelines 2021"
+  # Secrets — never plaintext. Use Key Vault references:
+  #   db_password: "${KEYVAULT:wealth-sg-db-password}"
+  #   api_key:     "${KEYVAULT:wealth-sg-api-key}"
