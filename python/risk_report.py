@@ -1,39 +1,59 @@
-"""Risk reporting module — Singapore deployment.
+"""Risk reporting module \u2014 entity-aware.
 
-All module-level constants represent the live SG entity configuration.
-These constants are the primary refactoring target for the multi-agent
-workflow that will introduce entity-aware configuration for HK and CH.
+Configuration is driven entirely by the ``ENTITY_ID`` environment variable
+(defaulting to ``\"SG\"`` for backward compatibility).  Entity-specific values
+are loaded from ``entity_configs/<id>.json`` via :mod:`entity_config`.
+
+Backward compatibility
+----------------------
+The module-level constants ``ENTITY_CODE``, ``CURRENCY``, ``REGULATOR``,
+``LOCALE``, ``DATA_REGION``, ``MGMT_FEE_BPS``, ``LARGE_POSITION_THRESHOLD``,
+and ``SUITABILITY_FRAMEWORK`` are still exported.  They resolve from the
+active entity config so that existing call-sites and tests continue to work
+unchanged when ``ENTITY_ID=SG`` (the default).
 """
+
+from __future__ import annotations
 
 from decimal import Decimal
 
-ENTITY_CODE = "SG"
-ENTITY_NAME = "Singapore"
-REGULATOR = "MAS"
-CURRENCY = "SGD"
-LOCALE = "en_SG"
-DATA_REGION = "ap-southeast-1"
-MGMT_FEE_BPS = Decimal("50")
-LARGE_POSITION_THRESHOLD = Decimal("250000")
-SUITABILITY_FRAMEWORK = "MAS-Notice-FAA"
+from entity_config import load_entity_config
+
+# \u2500\u2500 Load entity configuration (immutable after bootstrap) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+_cfg = load_entity_config()  # reads ENTITY_ID env-var; defaults to "SG"
+
+# \u2500\u2500 Backward-compatible module-level constants \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+ENTITY_CODE: str = _cfg.entity_id
+ENTITY_NAME: str = {
+    "SG": "Singapore",
+    "HK": "Hong Kong",
+    "CH": "Switzerland",
+}.get(_cfg.entity_id, _cfg.entity_id)
+REGULATOR: str = _cfg.regulator_primary
+CURRENCY: str = _cfg.currency
+LOCALE: str = _cfg.locale_primary
+DATA_REGION: str = _cfg.data_region
+MGMT_FEE_BPS: Decimal = _cfg.standard_fee_bps()
+LARGE_POSITION_THRESHOLD: Decimal = _cfg.large_position_threshold()
+SUITABILITY_FRAMEWORK: str = _cfg.suitability_framework
+
+# \u2500\u2500 Secret references (never plaintext) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nDB_CONNECTION_SECRET = _cfg.secret_ref("db-connection-string")
+API_KEY_SECRET = _cfg.secret_ref("api-key")
 
 
 def management_fee(market_value: Decimal) -> Decimal:
-    """Compute annual management fee at the Singapore schedule (50 bps)."""
+    """Compute annual management fee using the entity fee schedule."""
     return (market_value * MGMT_FEE_BPS / Decimal("10000")).quantize(Decimal("0.01"))
 
 
 def is_reportable(market_value: Decimal) -> bool:
-    """Return True if position exceeds the Singapore large-position threshold."""
+    """Return True if position meets or exceeds the entity large-position threshold."""
     return market_value >= LARGE_POSITION_THRESHOLD
 
 
 def disclosure_text() -> str:
-    """Return the MAS Notice FAA disclosure string for reportable positions."""
-    return (
-        "MAS Notice FAA: Past performance is not indicative of future results. "
-        "Investments involve risk."
-    )
+    """Return the regulator-specific disclosure string for reportable positions."""
+    return _cfg.disclosure_text()
 
 
 def build_report(portfolio_id: str, market_value: Decimal) -> dict:
