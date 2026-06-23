@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://acme.com/wealth/entity-config/v1",
+  "title": "Entity Configuration",
+  "description": "Schema for per-entity YAML configuration files used by the wealth management platform.",
+  "type": "object",
+  "required": ["entity"],
+  "additionalProperties": false,
+  "properties": {
+    "entity": {
+      "type": "object",
+      "required": [
+        "id",
+        "currency",
+        "locale",
+        "fee_schedule",
+        "portfolio_minimum",
+        "data_region",
+        "kms_vault_name",
+        "regulator",
+        "suitability_framework",
+        "disclosure_locale",
+        "audit_siem_workspace",
+        "data_residency_rule"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": ["SG", "HK", "CH"],
+          "description": "Entity identifier."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "ISO 4217 currency code."
+        },
+        "locale": {
+          "type": "object",
+          "required": ["primary", "supported"],
+          "additionalProperties": false,
+          "properties": {
+            "primary": {
+              "type": "string",
+              "pattern": "^[a-z]{2}_[A-Z]{2}$",
+              "description": "Primary locale (e.g. en_SG, zh_HK, de_CH)."
+            },
+            "supported": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]{2}_[A-Z]{2}$"
+              },
+              "minItems": 1,
+              "description": "All supported locales."
+            }
+          }
+        },
+        "fee_schedule": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["tier", "fee_bps", "threshold_min_amount", "threshold_min_currency"],
+            "properties": {
+              "tier": {
+                "type": "string",
+                "description": "Tier name (e.g. standard, premium)."
+              },
+              "fee_bps": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Management fee in basis points."
+              },
+              "threshold_min_amount": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Minimum portfolio value for this tier."
+              },
+              "threshold_min_currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              "threshold_max_amount": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum portfolio value for this tier (absent for unbounded)."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "portfolio_minimum": {
+          "type": "object",
+          "required": ["amount", "currency"],
+          "additionalProperties": false,
+          "properties": {
+            "amount": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Minimum portfolio amount."
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            }
+          }
+        },
+        "data_region": {
+          "type": "string",
+          "description": "Azure region slug for deployment."
+        },
+        "kms_vault_name": {
+          "type": "string",
+          "description": "Azure Key Vault name for this entity."
+        },
+        "regulator": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Primary regulator(s)."
+        },
+        "suitability_framework": {
+          "type": "string",
+          "description": "Regulatory suitability framework identifier."
+        },
+        "disclosure_locale": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]{2}_[A-Z]{2}$"
+          },
+          "minItems": 1,
+          "description": "Mandatory disclosure document locales."
+        },
+        "audit_siem_workspace": {
+          "type": "string",
+          "description": "Azure Log Analytics workspace resource ID."
+        },
+        "data_residency_rule": {
+          "type": "string",
+          "description": "Human-readable data residency constraint."
+        }
+      }
+    }
+  }
+}
