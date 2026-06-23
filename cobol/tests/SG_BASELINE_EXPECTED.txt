@@ -1,0 +1,9 @@
+# SG Baseline Expected Output Fragments
+# Each non-comment, non-blank line must appear in PORTVAL SG output.
+# Lines are matched with grep -F (fixed string).
+SG
+SGD
+en_SG
+MAS
+Singapore
+025
