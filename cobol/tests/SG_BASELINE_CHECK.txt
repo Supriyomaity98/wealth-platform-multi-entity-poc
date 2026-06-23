@@ -1,0 +1,73 @@
+============================================================
+  SG BASELINE SANITY CHECK - WP-COBOL (PORTVAL.cbl refactor)
+  Branch: refactor/cobol-entity-context
+============================================================
+
+PURPOSE:
+  Verify that the multi-entity refactoring of PORTVAL.cbl preserves
+  identical behaviour for the SG (Singapore) baseline entity.
+
+WHAT CHANGED:
+  - Hardcoded SG VALUE clauses removed from WORKING-STORAGE
+  - ENTITY_ID environment variable resolved at startup
+  - ENTCFG.cpy copybook provides compile-time constants for SG, HK, CH
+  - Dynamic dispatch via EVALUATE populates WS-* fields
+  - Azure Key Vault references replace any plaintext secrets
+  - DISPLAY statements use WS-* variables instead of SG literals
+
+BEHAVIOUR PRESERVATION ANALYSIS (SG):
+  When ENTITY_ID is unset or 'SG':
+    1. 1000-INITIALISE ACCEPTs ENTITY_ID FROM ENVIRONMENT -> blank
+    2. IF WS-ENTITY-CODE = SPACES -> MOVE 'SG' TO WS-ENTITY-CODE
+    3. EVALUATE dispatches to 1100-LOAD-CFG-SG
+    4. 1100-LOAD-CFG-SG moves ENTCFG copybook SG constants to WS-*:
+       - WS-ENTITY-CODE      = 'SG'
+       - WS-CURRENCY         = 'SGD'
+       - WS-LOCALE           = 'en_SG'
+       - WS-REGULATOR        = 'MAS'
+       - WS-BOOKING-CENTRE   = 'Singapore'
+       - WS-MGMT-FEE-BPS    = 025
+       - WS-LARGE-POS-THRESHOLD = (SG value)
+       - WS-DISCLOSURE-TEXT  = (SG MAS disclosure)
+       - WS-SUITABILITY-FWK  = (SG value)
+       - WS-DATA-REGION      = (SG value, e.g. 'southeastasia')
+       - WS-KMS-VAULT-NAME   = (SG value)
+       - WS-PORTFOLIO-MINIMUM-AMT = (SG value)
+       - WS-DATA-RESIDENCY-RULE = (SG value)
+       - WS-AUDIT-SIEM-WKSP  = (SG value)
+    5. DISPLAY output uses WS-* variables -> produces same strings as
+       the pre-refactor hardcoded literals.
+
+  VERDICT: SG baseline behaviour IS preserved.
+
+SANITY CHECK MATRIX:
+  +------+--------------------------------------------+----------+
+  | Test | Description                                | Expected |
+  +------+--------------------------------------------+----------+
+  |  1   | PORTVAL.cbl compiles with ENTCFG.cpy       | PASS     |
+  |  2   | ENTITY_ID unset -> defaults to SG           | PASS     |
+  |  3   | ENTITY_ID=SG explicit matches unset output  | PASS     |
+  |  4   | ENTITY_ID=HK loads HKD/SFC context          | PASS     |
+  |  5   | ENTITY_ID=CH loads CHF/FINMA context         | PASS     |
+  |  6   | No plaintext secrets in source               | PASS     |
+  |  7   | ENTCFG.cpy has SG, HK, CH constants         | PASS     |
+  |  8   | KEYVAULT reference pattern present           | PASS     |
+  |  9   | SG output matches expected baseline strings  | PASS     |
+  +------+--------------------------------------------+----------+
+
+KNOWN RESIDUAL ITEMS (not blocking, flagged for follow-up):
+  - Multi-tier fee logic for HK/CH (separate work item)
+  - Multi-locale support requires OCCURS-based table (EM review)
+  - HK/CH booking centre values need product owner confirmation
+  - WS-DISCLOSURE-TEXT single field limits multi-locale disclosures
+
+AUTOMATED SCRIPT:
+  Run: bash cobol/tests/run_sg_baseline.sh
+  Expected: All 9 tests PASS
+
+MANUAL z/OS VERIFICATION (if applicable):
+  1. Upload PORTVAL.cbl and ENTCFG.cpy to PDS
+  2. Compile with COBOL compiler (IGYCRCTL)
+  3. Submit JCL with ENTITY_ID=SG in PARM or CEEOPTS
+  4. Compare SYSOUT with pre-refactor baseline SYSOUT
+  5. Repeat with ENTITY_ID=HK and ENTITY_ID=CH
