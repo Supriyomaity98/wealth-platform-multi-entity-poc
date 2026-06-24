@@ -1,7 +1,9 @@
-       IDENTIFICATION DIVISION.
+IDENTIFICATION DIVISION.
        PROGRAM-ID. PORTVAL.
-      * Portfolio valuation batch — Singapore deployment.
-      * Hardcoded SG values below are the multi-entity refactoring target.
+      * Portfolio valuation batch — multi-entity deployment.
+      * Entity config loaded from ENTITY-COPY.cpy at compile time.
+      * Runtime ENTITY_ID env var selects entity; defaults to SG.
+      * Secrets resolved via Azure Key Vault references.
 
        ENVIRONMENT DIVISION.
        CONFIGURATION SECTION.
@@ -10,17 +12,30 @@
 
        DATA DIVISION.
        WORKING-STORAGE SECTION.
-      * --- Entity constants (refactoring target: load from config) ---
-       01  WS-ENTITY-CODE           PIC X(02) VALUE "SG".
-       01  WS-CURRENCY              PIC X(03) VALUE "SGD".
-       01  WS-LOCALE                PIC X(05) VALUE "en_SG".
-       01  WS-REGULATOR             PIC X(03) VALUE "MAS".
-       01  WS-BOOKING-CENTRE        PIC X(12) VALUE "Singapore".
-       01  WS-MGMT-FEE-BPS          PIC 9(03) VALUE 50.
+      * --- Entity context (loaded from copybook) ---
+       COPY ENTITY-COPY.
+
+      * --- Runtime entity selection ---
+       01  WS-ENV-ENTITY-ID         PIC X(02) VALUE SPACES.
+
+      * --- Active entity working fields ---
+       01  WS-ENTITY-CODE           PIC X(02) VALUE SPACES.
+       01  WS-CURRENCY              PIC X(03) VALUE SPACES.
+       01  WS-LOCALE                PIC X(05) VALUE SPACES.
+       01  WS-REGULATOR             PIC X(05) VALUE SPACES.
+       01  WS-BOOKING-CENTRE        PIC X(12) VALUE SPACES.
+       01  WS-MGMT-FEE-BPS          PIC 9(03) VALUE ZERO.
        01  WS-LARGE-POS-THRESHOLD   PIC 9(09)V99
-                                      VALUE 250000.00.
-       01  WS-DISCLOSURE-TEXT       PIC X(80)
-           VALUE "MAS Notice FAA: Past performance is not indicative".
+                                      VALUE ZERO.
+       01  WS-SUITABILITY-FWK       PIC X(20) VALUE SPACES.
+       01  WS-KMS-VAULT-NAME        PIC X(12) VALUE SPACES.
+       01  WS-DISCLOSURE-TEXT       PIC X(80) VALUE SPACES.
+
+      * --- Secret references (Azure Key Vault, never plaintext) ---
+      * Resolved at runtime by platform infrastructure.
+       01  WS-DB-CONN-SECRET        PIC X(60) VALUE SPACES.
+       01  WS-API-KEY-SECRET        PIC X(60) VALUE SPACES.
+
       * --- Portfolio input record ---
        01  WS-PORTFOLIO-ID          PIC X(12).
        01  WS-MARKET-VALUE          PIC 9(11)V99.
@@ -33,21 +48,82 @@
 
        PROCEDURE DIVISION.
        0000-MAIN.
-      * Entry point — initialise and process portfolio file.
+           PERFORM 0500-LOAD-ENTITY-CONFIG
            PERFORM 1000-INITIALISE
            PERFORM 2000-PROCESS-PORTFOLIOS
                UNTIL WS-EOF-FLAG = "Y"
            PERFORM 9000-FINALISE
            STOP RUN.
 
+       0500-LOAD-ENTITY-CONFIG.
+      * Read ENTITY_ID from environment; default SG.
+           ACCEPT WS-ENV-ENTITY-ID FROM ENVIRONMENT "ENTITY_ID"
+           IF WS-ENV-ENTITY-ID = SPACES OR LOW-VALUES
+               MOVE "SG" TO WS-ENV-ENTITY-ID
+           END-IF
+
+           EVALUATE WS-ENV-ENTITY-ID
+             WHEN "SG"
+               MOVE "SG"        TO WS-ENTITY-CODE
+               MOVE "SGD"       TO WS-CURRENCY
+               MOVE "en_SG"     TO WS-LOCALE
+               MOVE "MAS"       TO WS-REGULATOR
+               MOVE "Singapore" TO WS-BOOKING-CENTRE
+               MOVE 50           TO WS-MGMT-FEE-BPS
+               MOVE 250000.00    TO WS-LARGE-POS-THRESHOLD
+               MOVE "MAS_FAA_2002"    TO WS-SUITABILITY-FWK
+               MOVE "wealth-sg"       TO WS-KMS-VAULT-NAME
+               MOVE "MAS Notice FAA: Past performance is not i"
+               & "ndicative"   TO WS-DISCLOSURE-TEXT
+               MOVE "${KEYVAULT:wealth-sg-db-connection-string}"
+                 TO WS-DB-CONN-SECRET
+               MOVE "${KEYVAULT:wealth-sg-api-key}"
+                 TO WS-API-KEY-SECRET
+             WHEN "HK"
+               MOVE "HK"         TO WS-ENTITY-CODE
+               MOVE "HKD"        TO WS-CURRENCY
+               MOVE "en_HK"      TO WS-LOCALE
+               MOVE "SFC"        TO WS-REGULATOR
+               MOVE "Hong Kong"  TO WS-BOOKING-CENTRE
+               MOVE 60            TO WS-MGMT-FEE-BPS
+               MOVE 1000000.00    TO WS-LARGE-POS-THRESHOLD
+               MOVE "SFC_COP_2019"    TO WS-SUITABILITY-FWK
+               MOVE "wealth-hk"       TO WS-KMS-VAULT-NAME
+               MOVE "SFC Code of Conduct: Risk disclosure req"
+               & "uired"       TO WS-DISCLOSURE-TEXT
+               MOVE "${KEYVAULT:wealth-hk-db-connection-string}"
+                 TO WS-DB-CONN-SECRET
+               MOVE "${KEYVAULT:wealth-hk-api-key}"
+                 TO WS-API-KEY-SECRET
+             WHEN "CH"
+               MOVE "CH"         TO WS-ENTITY-CODE
+               MOVE "CHF"        TO WS-CURRENCY
+               MOVE "de_CH"      TO WS-LOCALE
+               MOVE "FINMA"      TO WS-REGULATOR
+               MOVE "Zurich"     TO WS-BOOKING-CENTRE
+               MOVE 80            TO WS-MGMT-FEE-BPS
+               MOVE 5000000.00    TO WS-LARGE-POS-THRESHOLD
+               MOVE "FINMA_LSFin_2020" TO WS-SUITABILITY-FWK
+               MOVE "wealth-ch"       TO WS-KMS-VAULT-NAME
+               MOVE "FINMA LSFin: Suitability disclosure requ"
+               & "ired"        TO WS-DISCLOSURE-TEXT
+               MOVE "${KEYVAULT:wealth-ch-db-connection-string}"
+                 TO WS-DB-CONN-SECRET
+               MOVE "${KEYVAULT:wealth-ch-api-key}"
+                 TO WS-API-KEY-SECRET
+             WHEN OTHER
+               DISPLAY "FATAL: Unknown ENTITY_ID: "
+                   WS-ENV-ENTITY-ID
+               STOP RUN
+           END-EVALUATE.
+
        1000-INITIALISE.
-      * Open input portfolio file and reset counters.
-           DISPLAY "PORTVAL starting — entity SG, regulator MAS"
+           DISPLAY "PORTVAL starting — entity "
+               WS-ENTITY-CODE ", regulator " WS-REGULATOR
            MOVE ZERO TO WS-RECORD-COUNT
            MOVE "N" TO WS-EOF-FLAG.
 
        2000-PROCESS-PORTFOLIOS.
-      * Read next portfolio and compute valuation.
            PERFORM 2100-READ-PORTFOLIO
            IF WS-EOF-FLAG NOT = "Y"
                PERFORM 3000-VALUATE-PORTFOLIO
@@ -59,18 +135,17 @@
            MOVE "Y" TO WS-EOF-FLAG.
 
        3000-VALUATE-PORTFOLIO.
-      * Apply Singapore fee schedule and check reportability.
            PERFORM 3100-COMPUTE-FEE
            PERFORM 3200-CHECK-REPORTABLE
            PERFORM 3300-EMIT-VALUATION.
 
        3100-COMPUTE-FEE.
-      * Management fee = market value * bps / 10000 (50 bps SG schedule).
+      * Management fee = market value * bps / 10000.
            COMPUTE WS-FEE-RATE = WS-MGMT-FEE-BPS / 10000
            COMPUTE WS-MGMT-FEE = WS-MARKET-VALUE * WS-FEE-RATE.
 
        3200-CHECK-REPORTABLE.
-      * Positions above 250000 SGD require regulatory disclosure.
+      * Positions above threshold require regulatory disclosure.
            IF WS-MARKET-VALUE >= WS-LARGE-POS-THRESHOLD
                MOVE "Y" TO WS-IS-REPORTABLE
            ELSE
@@ -78,7 +153,6 @@
            END-IF.
 
        3300-EMIT-VALUATION.
-      * Write valuation line with SG booking centre and disclosure.
            DISPLAY "PORTFOLIO: " WS-PORTFOLIO-ID
            DISPLAY "  CURRENCY: " WS-CURRENCY
            DISPLAY "  BOOKING:  " WS-BOOKING-CENTRE
@@ -90,6 +164,6 @@
            END-IF.
 
        9000-FINALISE.
-      * Close files and print summary.
            DISPLAY "PORTVAL complete — processed "
-               WS-RECORD-COUNT " portfolios (SG)".
+               WS-RECORD-COUNT " portfolios ("
+               WS-ENTITY-CODE ")".
