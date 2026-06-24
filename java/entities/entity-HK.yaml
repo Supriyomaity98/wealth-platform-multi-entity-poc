@@ -1,0 +1,16 @@
+# Entity: HK (Hong Kong)
+# Deploy to: /etc/wealth/config/entity-HK.yaml
+# Secrets use Azure Key Vault references - never plaintext.
+
+currency_code:          HKD
+default_locale:         en_HK
+fee_bps:                60
+minimum_aum_threshold:  1000000
+data_region:            ap-east-1
+key_vault_name:         wealth-hk
+suitability_framework:  SFC_COP_2019
+disclosure_locale:      en_HK
+primary_regulator:      SFC
+supported_languages:    [en, zh-HK]
+booking_centre:         Hong Kong
+db_password:            "${KEYVAULT:wealth-hk-db-password}"
