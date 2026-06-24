@@ -1,0 +1,26 @@
+# Switzerland entity configuration
+entity_id: CH
+currency: CHF
+locales:
+  - de_CH
+languages:
+  - de
+  - fr
+  - it
+  - en
+data_region: eu-central-1
+vault_uri: https://wealth-ch.vault.azure.net/
+fee_bps: 80
+large_position_threshold: 5000000
+minimum_aum: 1000000
+suitability_framework: FINMA_LSFin_2020
+regulators:
+  - FINMA
+booking_centre: Zurich
+disclosure_locale: de_CH
+cross_border_restrictions_enabled: true
+data_residency_strict: true
+audit_log_destination: azure-monitor-ch
+kv_db_secret_name: "${KEYVAULT:wealth-ch-db-connection-string}"
+kv_jwt_secret_name: "${KEYVAULT:wealth-ch-jwt-secret}"
+kv_encryption_key_name: "${KEYVAULT:wealth-ch-encryption-key}"
