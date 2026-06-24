@@ -1,0 +1,27 @@
+entity:
+  entity_id: CH
+  entity_name: Switzerland
+  booking_centre: Zurich
+
+locale:
+  currency: CHF
+  default_locale: de_CH
+  supported_languages:
+    - de
+    - fr
+    - it
+    - en
+
+regulatory:
+  regulators:
+    - FINMA
+  disclosure_locale: de_CH
+
+product_rules:
+  advisory_fee_bps: 80
+  onboarding_threshold_minor_units: 5000000
+  suitability_framework: FINMA_LSFin_2020
+
+infrastructure:
+  azure_region: switzerlandnorth
+  kv_vault_uri: wealth-ch-db-connection-string
