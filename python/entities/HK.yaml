@@ -1,0 +1,24 @@
+# Hong Kong entity configuration
+entity_id: HK
+currency: HKD
+locales:
+  - en_HK
+languages:
+  - en
+  - zh
+data_region: ap-east-1
+vault_uri: https://wealth-hk.vault.azure.net/
+fee_bps: 60
+large_position_threshold: 1000000
+minimum_aum: 500000
+suitability_framework: SFC_COP_2019
+regulators:
+  - SFC
+booking_centre: Hong Kong
+disclosure_locale: en_HK
+cross_border_restrictions_enabled: true
+data_residency_strict: true
+audit_log_destination: azure-monitor-hk
+kv_db_secret_name: "${KEYVAULT:wealth-hk-db-connection-string}"
+kv_jwt_secret_name: "${KEYVAULT:wealth-hk-jwt-secret}"
+kv_encryption_key_name: "${KEYVAULT:wealth-hk-encryption-key}"
