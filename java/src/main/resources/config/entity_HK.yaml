@@ -1,0 +1,14 @@
+entity_id: HK
+currency: HKD
+locale: en_HK
+regulator: SFC
+fee_bps: 60
+min_threshold: 1000000
+data_region: ap-east-1
+kms_vault_name: wealth-hk
+suitability_framework: SFC_COP_2019
+disclosure_locale: en_HK
+booking_centre: Hong Kong
+audit_trail_enabled: true
+db_connection_secret: "${KEYVAULT:wealth-hk-db-connection-string}"
+api_key_secret: "${KEYVAULT:wealth-hk-api-key}"
