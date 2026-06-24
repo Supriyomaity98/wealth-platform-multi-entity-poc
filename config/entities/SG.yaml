@@ -1,0 +1,22 @@
+entity_id: SG
+currency: SGD
+locales: en_SG
+languages:
+  - en
+data_region: ap-southeast-1
+vault_uri: https://wealth-sg.vault.azure.net/
+fee_bps: 50
+minimum_aum: 100000
+large_position_threshold: 250000
+suitability_framework: MAS_FAA_2002
+regulators:
+  - MAS
+booking_centre: Singapore
+disclosure_locale: en_SG
+cross_border_restrictions_enabled: false
+data_residency_strict: true
+audit_log_destination: azure-log-analytics-sg
+kms_vault_name: wealth-sg
+kv_db_secret_name: db-connection-string
+kv_jwt_secret_name: jwt-secret
+kv_encryption_key_name: encryption-key
