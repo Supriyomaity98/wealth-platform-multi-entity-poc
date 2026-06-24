@@ -1,0 +1,24 @@
+entity:
+  entity_id: SG
+  entity_name: Singapore
+  booking_centre: Singapore
+
+locale:
+  currency: SGD
+  default_locale: en_SG
+  supported_languages:
+    - en
+
+regulatory:
+  regulators:
+    - MAS
+  disclosure_locale: en_SG
+
+product_rules:
+  advisory_fee_bps: 50
+  onboarding_threshold_minor_units: 250000
+  suitability_framework: MAS_FAA_2002
+
+infrastructure:
+  azure_region: southeastasia
+  kv_vault_uri: wealth-sg-db-connection-string
