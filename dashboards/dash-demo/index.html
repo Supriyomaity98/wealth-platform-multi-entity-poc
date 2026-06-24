@@ -1,0 +1,266 @@
+<!doctype html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Wand Engineering Squad - Run Dashboard - DASH-DEMO</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.6/dist/mermaid.min.js"></script>
+    <style>
+      :root { color-scheme: light dark; --bg:#0b0f17; --panel:#121826; --panel-2:#1a2233; --text:#e5e9f0; --muted:#8893a8; --acc:#3b82f6; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --border:#243049; }
+      body.light { --bg:#f7f9fc; --panel:#ffffff; --panel-2:#eef2f8; --text:#101522; --muted:#566380; --border:#dde3ee; }
+      * { box-sizing: border-box; }
+      body { background:var(--bg); color:var(--text); font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; }
+      header { padding:18px 24px; background:var(--panel); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+      header h1 { margin:0; font-size:18px; }
+      header .meta { color:var(--muted); font-size:12px; }
+      main { padding:18px 24px; display:grid; grid-template-columns: 1fr 280px; gap:18px; }
+      .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-bottom:14px; }
+      .kpi { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+      .kpi .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+      .kpi .value { font-size:24px; font-weight:600; margin-top:4px; }
+      .tabs { display:flex; gap:6px; border-bottom:1px solid var(--border); margin-bottom:12px; flex-wrap:wrap; }
+      .tab { padding:8px 12px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; font-size:13px; }
+      .tab.active { color:var(--text); border-color:var(--acc); }
+      .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; }
+      .panel h3 { margin-top:0; }
+      .grid { display:grid; gap:12px; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .card { background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:12px; }
+      .card h4 { margin:0 0 8px; font-size:14px; }
+      .lang { font-size:11px; color:var(--muted); font-weight:normal; }
+      .kv { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:2px 0; }
+      .kv b, .kv code { color:var(--text); }
+      table { width:100%; border-collapse:collapse; font-size:13px; }
+      th, td { text-align:left; padding:8px; border-bottom:1px solid var(--border); }
+      th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+      details.pr { background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin:8px 0; }
+      details.pr summary { cursor:pointer; font-size:14px; }
+      .status { font-size:11px; padding:2px 8px; border-radius:999px; margin-left:6px; }
+      .status-merged { background:rgba(34,197,94,.15); color:var(--ok); }
+      .status-open   { background:rgba(245,158,11,.15); color:var(--warn); }
+      .status-failed { background:rgba(239,68,68,.15); color:var(--err); }
+      .diff { margin-top:10px; }
+      .diff-file { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--muted); margin-bottom:6px; }
+      .diff-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .diff-cols h5 { margin:0 0 4px; font-size:12px; color:var(--muted); }
+      .diff pre { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px; font:12px/1.45 ui-monospace,Menlo,monospace; overflow:auto; max-height:280px; }
+      .prio { display:inline-block; font-size:10px; padding:1px 7px; border-radius:999px; margin-right:6px; font-weight:600; letter-spacing:.05em; }
+      .prio-P0, .prio-high   { background:rgba(239,68,68,.15); color:var(--err); }
+      .prio-P1, .prio-medium { background:rgba(245,158,11,.15); color:var(--warn); }
+      .prio-P2, .prio-low    { background:rgba(34,197,94,.15); color:var(--ok); }
+      aside { display:flex; flex-direction:column; gap:12px; }
+      aside .panel a { display:block; padding:6px 0; color:var(--acc); text-decoration:none; font-size:13px; border-bottom:1px solid var(--border); }
+      aside .panel a:last-child { border-bottom:0; }
+      .mermaid { background:var(--panel-2); border-radius:8px; padding:14px; }
+      ul { padding-left:18px; }
+      ul li { margin:4px 0; }
+      textarea { width:100%; min-height:80px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px; font:13px ui-monospace,Menlo,monospace; }
+      button { background:var(--acc); color:white; border:0; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
+      button.ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+      footer { padding:14px 24px; color:var(--muted); font-size:12px; text-align:center; border-top:1px solid var(--border); }
+      .hide { display:none; }
+      @media (max-width: 900px) { main { grid-template-columns: 1fr; } .grid-2, .grid-3 { grid-template-columns: 1fr; } .diff-cols { grid-template-columns: 1fr; } }
+    </style>
+    </head>
+    <body>
+    <header>
+      <div>
+        <h1>Wand Engineering Squad - Run Dashboard</h1>
+        <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T15:04:55Z &middot; <b>TEST WORKFLOW - SYNTHETIC DATA</b></div>
+      </div>
+      <div>
+        <button class="ghost" onclick="document.body.classList.toggle('light')">Toggle theme</button>
+      </div>
+    </header>
+    <main>
+      <section>
+        <div class="kpis">
+          <div class="kpi"><div class="label">Agents in squad</div><div class="value">11</div></div>
+          <div class="kpi"><div class="label">Jira tickets</div><div class="value">1</div></div>
+          <div class="kpi"><div class="label">PRs opened</div><div class="value">4 / 4</div></div>
+          <div class="kpi"><div class="label">PRs merged</div><div class="value">4</div></div>
+          <div class="kpi"><div class="label">QA tests added</div><div class="value">28</div></div>
+          <div class="kpi"><div class="label">Human gates</div><div class="value">3 / 2</div></div>
+          <div class="kpi"><div class="label">Knowledge Vault</div><div class="value">8</div></div>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="overview">Overview</div>
+          <div class="tab" data-tab="workflow">Workflow</div>
+          <div class="tab" data-tab="architecture">Architecture</div>
+          <div class="tab" data-tab="squad">Squad</div>
+          <div class="tab" data-tab="prs">PRs &amp; Diffs</div>
+          <div class="tab" data-tab="qa">QA</div>
+          <div class="tab" data-tab="learning">Learning cycle</div>
+          <div class="tab" data-tab="vault">Knowledge Vault</div>
+          <div class="tab" data-tab="audit">Audit</div>
+        </div>
+
+        <div class="tab-panel" id="tab-overview">
+          <div class="panel">
+            <h3>Executive summary</h3>
+            <p>4/4 packages merged after 2 human gates. Pattern matches the v3 Knowledge Vault entry on regulator-first refactors. Confidence on next-cycle savings: HIGH.</p>
+            <div class="grid grid-3">
+    <div class="card"><h4>Outcome</h4>4 of 4 PRs merged to main. 4 opened, 28 QA tests added.</div>
+    <div class="card"><h4>Entities live</h4>SG, HK, CH (home: SG)</div>
+    <div class="card"><h4>Savings projected</h4>14 hours saved next cycle (high confidence, payoff in 1 cycle(s))</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-workflow">
+          <div class="panel"><h3>Workflow</h3><div class="mermaid">flowchart LR
+  S["Setup"] --> PO["Product Owner"]
+  PO --> BA["Business Analyst"]
+  BA --> REG["Regulatory SME"]
+  REG --> SA["Solution Architect"]
+  SA --> EM["Engineering Manager"]
+  EM --> ENG["Senior Engineers x4<br/>(parallel)"]
+  ENG --> QA["QA Engineer"]
+  QA --> CI["CI Checks"]
+  CI --> G2["Gate 2: PR review"]
+  G2 --> CL["Capture Learnings"]
+  CL --> BUN["Bundle"]
+  BUN --> G3["Gate 3: Merge"]
+  G3 --> MRG["Merge PRs"]
+  MRG --> LA["Learning Advisor"]
+  LA --> VAU["Knowledge Vault"]
+  VAU --> DASH["Dashboard"]
+  DASH --> EMAIL["Final Email"]</div></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-architecture">
+          <div class="panel"><h3>Architecture</h3><div class="mermaid">flowchart LR
+  subgraph CFG["Per-entity configs"]
+    SG["SG.yaml"]
+    HK["HK.yaml"]
+    CH["CH.yaml"]
+  end
+  CFG --> CTX["EntityContext / Resolver"]
+  CTX --> APP["wealth-platform app code<br/>(entity-aware)"]
+  APP --> KV["Azure Key Vault<br/>(secret refs)"]
+  APP --> DB["DB schema<br/>(entity_id column)"]</div></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-squad">
+          <div class="panel"><h3>Squad - 4 engineers + PO/BA/Reg/SA/EM/QA/CoS</h3>
+            <div class="grid grid-3"><div class="card"><h4>Anna - Senior Database Engineer <span class="lang">[SQL]</span></h4><div class="kv"><span>Package</span><b>WP-SQL</b></div><div class="kv"><span>Branch</span><code>refactor/sql-entity-context</code></div><div class="kv"><span>Files</span>2</div><div class="kv"><span>+lines</span>142</div><div class="kv"><span>-lines</span>18</div></div><div class="card"><h4>Gaurav - Senior Backend Engineer <span class="lang">[Java]</span></h4><div class="kv"><span>Package</span><b>WP-JAVA</b></div><div class="kv"><span>Branch</span><code>refactor/java-entity-context</code></div><div class="kv"><span>Files</span>6</div><div class="kv"><span>+lines</span>318</div><div class="kv"><span>-lines</span>47</div></div><div class="card"><h4>Diego - Senior Data Engineer <span class="lang">[Python]</span></h4><div class="kv"><span>Package</span><b>WP-PYTHON</b></div><div class="kv"><span>Branch</span><code>refactor/python-entity-context</code></div><div class="kv"><span>Files</span>2</div><div class="kv"><span>+lines</span>96</div><div class="kv"><span>-lines</span>31</div></div><div class="card"><h4>Mei - Senior Mainframe Engineer <span class="lang">[COBOL]</span></h4><div class="kv"><span>Package</span><b>WP-COBOL</b></div><div class="kv"><span>Branch</span><code>refactor/cobol-entity-context</code></div><div class="kv"><span>Files</span>2</div><div class="kv"><span>+lines</span>74</div><div class="kv"><span>-lines</span>22</div></div></div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-prs">
+          <div class="panel"><h3>Pull requests &amp; sample diffs</h3><details class="pr"><summary><b>PR #4101</b> - WP-SQL <span class="status status-merged">merged</span></summary><div class="kv"><span>Author</span>Anna</div><div class="kv"><span>Branch</span><code>refactor/sql-entity-context</code></div><div class="kv"><span>Files changed</span>2</div><div class="kv"><span>+/-</span>+142 / -18</div><div class="kv"><span>URL</span><a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/4101" target="_blank" rel="noopener">https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/4101</a></div><div class="diff"><div class="diff-file">sql/schema.sql</div><div class="diff-cols"><div><h5>Before</h5><pre>CREATE TABLE client (
+  client_id BIGINT PRIMARY KEY,
+  residency_region VARCHAR(64) DEFAULT &#x27;ap-southeast-1&#x27;,
+  language VARCHAR(8) DEFAULT &#x27;en&#x27;
+);</pre></div><div><h5>After</h5><pre>CREATE TABLE client (
+  client_id BIGINT PRIMARY KEY,
+  entity_id VARCHAR(8) NOT NULL,
+  residency_region VARCHAR(64) NOT NULL,
+  language VARCHAR(8) NOT NULL,
+  FOREIGN KEY (entity_id) REFERENCES entity_config(entity_id)
+);</pre></div></div></div></details><details class="pr"><summary><b>PR #4102</b> - WP-JAVA <span class="status status-merged">merged</span></summary><div class="kv"><span>Author</span>Gaurav</div><div class="kv"><span>Branch</span><code>refactor/java-entity-context</code></div><div class="kv"><span>Files changed</span>6</div><div class="kv"><span>+/-</span>+318 / -47</div><div class="kv"><span>URL</span><a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/4102" target="_blank" rel="noopener">https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/4102</a></div><div class="diff"><div class="diff-file">java/src/main/java/com/acme/wealth/AccountController.java</div><div class="diff-cols"><div><h5>Before</h5><pre>public BigDecimal feeFor(String region) {
+  if (&quot;SG&quot;.equals(region)) return new BigDecimal(&quot;0.005&quot;);
+  return new BigDecimal(&quot;0.010&quot;);
+}</pre></div><div><h5>After</h5><pre>public BigDecimal feeFor(EntityContext ctx) {
+  return ctx.config().feeBps()
+            .divide(BigDecimal.valueOf(10000), 4, HALF_UP);
+}</pre></div></div></div></details><details class="pr"><summary><b>PR #4103</b> - WP-PYTHON <span class="status status-merged">merged</span></summary><div class="kv"><span>Author</span>Diego</div><div class="kv"><span>Branch</span><code>refactor/python-entity-context</code></div><div class="kv"><span>Files changed</span>2</div><div class="kv"><span>+/-</span>+96 / -31</div><div class="kv"><span>URL</span><a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/4103" target="_blank" rel="noopener">https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/4103</a></div><div class="diff"><div class="diff-file">python/risk_report.py</div><div class="diff-cols"><div><h5>Before</h5><pre>def threshold(client):
+    if client.region == &#x27;SG&#x27;:
+        return 250000
+    return 500000</pre></div><div><h5>After</h5><pre>def threshold(client, entity_ctx):
+    return entity_ctx.config(client.entity_id).threshold</pre></div></div></div></details><details class="pr"><summary><b>PR #4104</b> - WP-COBOL <span class="status status-merged">merged</span></summary><div class="kv"><span>Author</span>Mei</div><div class="kv"><span>Branch</span><code>refactor/cobol-entity-context</code></div><div class="kv"><span>Files changed</span>2</div><div class="kv"><span>+/-</span>+74 / -22</div><div class="kv"><span>URL</span><a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/4104" target="_blank" rel="noopener">https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/4104</a></div><div class="diff"><div class="diff-file">cobol/PORTVAL.cbl</div><div class="diff-cols"><div><h5>Before</h5><pre>       IF WS-REGION = &#x27;SG&#x27;
+           MOVE 250000 TO WS-THRESHOLD</pre></div><div><h5>After</h5><pre>       COPY ENTITY-COPY.
+       MOVE ENT-THRESHOLD TO WS-THRESHOLD</pre></div></div></div></details></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-qa">
+          <div class="panel"><h3>QA per package</h3>
+            <table><thead><tr><th>Package</th><th>Lang</th><th>Verdict</th><th>Tests</th><th>Notes</th></tr></thead>
+            <tbody><tr><td><b>WP-SQL</b></td><td>SQL</td><td>PASS</td><td>8</td><td>V2 migration backfills SG and seeds entity_config; CI green.</td></tr><tr><td><b>WP-JAVA</b></td><td>Java</td><td>PASS</td><td>10</td><td>EntityContext loads YAML per entity; coverage 92%.</td></tr><tr><td><b>WP-PYTHON</b></td><td>Python</td><td>PASS</td><td>7</td><td>Threshold + currency tests pinned to entity_config; pytest green.</td></tr><tr><td><b>WP-COBOL</b></td><td>COBOL</td><td>PASS</td><td>3</td><td>COPY ENTITY-COPY substituted; batch harness green.</td></tr></tbody></table>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-learning">
+          <div class="panel">
+            <h3>Learning cycle - intelligence layer</h3>
+            <p><b>Executive summary:</b> 4/4 packages merged after 2 human gates. Pattern matches the v3 Knowledge Vault entry on regulator-first refactors. Confidence on next-cycle savings: HIGH.</p>
+            <div class="grid grid-2">
+    <div class="card"><h4>Observations</h4><ul><li><b>O-1</b> - Engineers converged on EntityContext lookup pattern within first iteration.<br/><small>Evidence: All 4 packages use ctx.config(entity_id).&lt;field&gt;; zero rework loops.</small></li>
+<li><b>O-2</b> - COBOL package consistently takes ~2x other languages.<br/><small>Evidence: WP-COBOL: 74+/22- lines but 3 QA tests vs 7-10 elsewhere (vault v5 pattern).</small></li></ul></div>
+    <div class="card"><h4>Patterns detected</h4><ul><li>Regulator-first refactor (vault v3) reduced churn by ~30%.</li>
+<li>Pinning canonical entity values upfront (vault v2) prevented all QA test drift.</li></ul></div>
+    <div class="card"><h4>Recommendations (ranked)</h4><ul><li><span class="prio prio-P0">P0</span> <b>Auto-generate entity-*.yaml stubs from regulator code list before dispatch</b> (Engineering Manager, ~4h)<br/><small>Cuts setup time by ~1h per engineer; lifts vault v6 from advisory to enforced.</small></li>
+<li><span class="prio prio-P1">P1</span> <b>Add QA floor of 8 tests for COBOL packages</b> (QA, ~1h)<br/><small>Vault v5 + v7 both flag this; we have repeated evidence.</small></li>
+<li><span class="prio prio-P2">P2</span> <b>Move sample_diff fields out of LLM schema; render from real git diff</b> (Platform, ~3h)<br/><small>Frees ~20%% of engineer token budget.</small></li></ul></div>
+    <div class="card"><h4>Guardrails for next cycle</h4><ul><li><b>Reject delegation_plan if any package lacks entity_config_format AND env_var_name</b><br/><small>Enforced by: <code>t_eng_mgr_delegate schema validation</code></small></li>
+<li><b>QA test count floor = max(8, residual_hardcodes_flagged * 2)</b><br/><small>Enforced by: <code>t_qa_per_package post-check</code></small></li></ul></div>
+    <div class="card"><h4>Risk flags</h4><ul><li><span class="prio prio-medium">medium</span> Orphaned holding rows default to SG in V2 migration<br/><small>Mitigation: Surface as data-quality error in pre-flight script; ticket DASH-DEMO-FOLLOWUP.</small></li>
+<li><span class="prio prio-low">low</span> client.residency_region NOT NULL drops legacy DEFAULTs<br/><small>Mitigation: App team to backfill via entity_config on next deploy.</small></li></ul></div>
+    <div class="card"><h4>Estimated savings</h4><p><b>14</b> hours / cycle, payoff in <b>1</b> cycle(s), confidence <b>high</b>.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-vault">
+          <div class="panel">
+            <h3>Knowledge Vault - 8 entries (this cycle adds <b>v8</b>)</h3>
+            <p>The Knowledge Vault persists every cycle's intelligence layer. Next cycle's Learning Advisor reads this before producing its own recommendations - the feedback loop.</p>
+            <p>
+    <a href="https://supriyomaity98.github.io/wealth-platform-multi-entity-poc/dashboards/dash-demo/index.html" target="_blank" rel="noopener"><button>Open latest entry (v8)</button></a>
+    <a href="https://supriyomaity98.github.io/wealth-platform-multi-entity-poc/dashboards/dash-demo/index.html" target="_blank" rel="noopener"><button class="ghost">Open full index</button></a>
+            </p>
+            <table><thead><tr><th>Version</th><th>Sprint</th><th>Headline</th><th>Status</th></tr></thead>
+            <tbody><tr><td><b>v8</b></td><td>FY26-Q2-S04</td><td>Auto-generate entity-*.yaml stubs from regulator code list before dispatch (THIS CYCLE).</td><td>new</td></tr><tr><td><b>v7</b></td><td>FY25-Q3-S08</td><td>QA test count &lt;= 6 per package correlates with residual hardcodes &gt;= 2. Floor at 8 tests when flagged.</td><td>adopted</td></tr><tr><td><b>v6</b></td><td>FY25-Q3-S04</td><td>Shared contract MUST include entity_config_format + env_var_name BEFORE engineers dispatch.</td><td>adopted</td></tr><tr><td><b>v5</b></td><td>FY25-Q2-S05</td><td>COBOL packages take ~2x estimated effort - allocate 1.5x buffer.</td><td>adopted</td></tr><tr><td><b>v4</b></td><td>FY25-Q2-S02</td><td>QA must add at least 1 test per residual_hardcode_flagged.</td><td>adopted</td></tr><tr><td><b>v3</b></td><td>FY25-Q1-S05</td><td>Externalise regulator codes BEFORE booking centres - regulator drives suitability framework.</td><td>adopted</td></tr><tr><td><b>v2</b></td><td>FY25-Q1-S02</td><td>Pin canonical entity values in one source-of-truth file before parallel engineer dispatch.</td><td>adopted</td></tr><tr><td><b>v1</b></td><td>FY24-Q4-S08</td><td>CI gate on Decimal precision when refactoring fee logic.</td><td>adopted</td></tr></tbody></table>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-audit">
+          <div class="panel">
+            <h3>Audit - bundle contents</h3>
+            <p>Every file written during this run is downloadable below. Bundle zip: <a href="https://example.com/wpm-bundle.zip" target="_blank" rel="noopener">https://example.com/wpm-bundle.zip</a></p>
+            <table><thead><tr><th>Path</th><th>Bytes</th><th>Link</th></tr></thead>
+            <tbody><tr><td><code>sql/schema.sql</code></td><td>3874</td><td><a href="https://example.com/sql/schema.sql" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>sql/migrations/V2__add_entity_id.sql</code></td><td>5250</td><td><a href="https://example.com/sql/migrations/V2__add_entity_id.sql" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>java/src/main/java/com/acme/wealth/AccountController.java</code></td><td>1881</td><td><a href="https://example.com/java/AccountController.java" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>java/pom.xml</code></td><td>1415</td><td><a href="https://example.com/java/pom.xml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>java/src/main/java/com/acme/wealth/EntityContext.java</code></td><td>3913</td><td><a href="https://example.com/java/EntityContext.java" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>java/entities/entity-SG.yaml</code></td><td>564</td><td><a href="https://example.com/java/entities/entity-SG.yaml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>java/entities/entity-HK.yaml</code></td><td>542</td><td><a href="https://example.com/java/entities/entity-HK.yaml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>java/entities/entity-CH.yaml</code></td><td>552</td><td><a href="https://example.com/java/entities/entity-CH.yaml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>python/risk_report.py</code></td><td>2241</td><td><a href="https://example.com/python/risk_report.py" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>python/entity_config.py</code></td><td>1638</td><td><a href="https://example.com/python/entity_config.py" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>cobol/PORTVAL.cbl</code></td><td>5457</td><td><a href="https://example.com/cobol/PORTVAL.cbl" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>cobol/ENTITY-COPY.cpy</code></td><td>1985</td><td><a href="https://example.com/cobol/ENTITY-COPY.cpy" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>docs/cycle-learnings.md</code></td><td>4120</td><td><a href="https://example.com/docs/cycle-learnings.md" target="_blank" rel="noopener">open</a></td></tr></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <aside>
+        <div class="panel">
+          <h3>Quick links</h3>
+          <a href="https://jira.example.com/browse/DASH-DEMO" target="_blank" rel="noopener">Jira: DASH-DEMO</a>
+          <a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc" target="_blank" rel="noopener">GitHub repo</a>
+          <a href="https://example.com/wpm-bundle.zip" target="_blank" rel="noopener">Bundle zip</a>
+          <a href="https://supriyomaity98.github.io/wealth-platform-multi-entity-poc/dashboards/dash-demo/index.html" target="_blank" rel="noopener">Vault entry v8</a>
+          <a href="https://supriyomaity98.github.io/wealth-platform-multi-entity-poc/dashboards/dash-demo/index.html" target="_blank" rel="noopener">Vault index</a>
+        </div>
+        <div class="panel">
+          <h3>Notes (saved locally)</h3>
+          <textarea id="notes" placeholder="Reviewer notes - persisted in your browser"></textarea>
+          <p><button onclick="saveNotes()">Save</button>
+             <button class="ghost" onclick="clearNotes()">Clear</button></p>
+        </div>
+      </aside>
+    </main>
+    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T15:04:55Z</footer>
+    <script>
+      mermaid.initialize({ startOnLoad: true, theme: document.body.classList.contains('light') ? 'default' : 'dark' });
+      document.querySelectorAll('.tab').forEach(function(t){
+        t.addEventListener('click', function(){
+          document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+          t.classList.add('active');
+          var name = t.getAttribute('data-tab');
+          document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.add('hide'); });
+          document.getElementById('tab-' + name).classList.remove('hide');
+        });
+      });
+      var notesKey = 'wand-dash-notes-' + "DASH-DEMO";
+      function loadNotes(){ var v = localStorage.getItem(notesKey); if(v){ document.getElementById('notes').value = v; } }
+      function saveNotes(){ localStorage.setItem(notesKey, document.getElementById('notes').value); }
+      function clearNotes(){ localStorage.removeItem(notesKey); document.getElementById('notes').value = ''; }
+      loadNotes();
+    </script>
+    </body>
+    </html>
+    
