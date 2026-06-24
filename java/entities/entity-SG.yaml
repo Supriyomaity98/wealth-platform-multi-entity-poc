@@ -1,0 +1,16 @@
+# Entity: SG (Singapore - home entity / baseline)
+# Deploy to: /etc/wealth/config/entity-SG.yaml
+# Secrets use Azure Key Vault references - never plaintext.
+
+currency_code:          SGD
+default_locale:         en_SG
+fee_bps:                50
+minimum_aum_threshold:  250000
+data_region:            ap-southeast-1
+key_vault_name:         wealth-sg
+suitability_framework:  MAS_FAA_2002
+disclosure_locale:      en_SG
+primary_regulator:      MAS
+supported_languages:    [en]
+booking_centre:         Singapore
+db_password:            "${KEYVAULT:wealth-sg-db-password}"
