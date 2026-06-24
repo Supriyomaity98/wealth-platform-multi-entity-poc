@@ -1,0 +1,13 @@
+entity_id: SG
+currency: SGD
+locale: en_SG
+regulator: MAS
+booking_centre: Singapore
+fee_bps: 50
+large_position_threshold: 250000
+min_threshold: 250000
+data_region: ap-southeast-1
+kms_vault_name: wealth-sg
+suitability_framework: MAS_FAA_2002
+disclosure_locale: en_SG
+audit_trail_enabled: true

@@ -1,0 +1,13 @@
+entity_id: CH
+currency: CHF
+locale: de_CH
+regulator: FINMA
+booking_centre: Zurich
+fee_bps: 80
+large_position_threshold: 5000000
+min_threshold: 5000000
+data_region: eu-central-1
+kms_vault_name: wealth-ch
+suitability_framework: FINMA_LSFin_2020
+disclosure_locale: de_CH
+audit_trail_enabled: true
