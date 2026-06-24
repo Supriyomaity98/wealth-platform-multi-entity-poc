@@ -1,0 +1,141 @@
+======================================================================
+PORTVAL COBOL — SANITY / BEHAVIOUR-PRESERVATION CHECK FILE
+Senior QA Engineer — WP-COBOL iteration
+Canonical values: see task brief (hard-pinned).
+======================================================================
+
+INSTRUCTIONS
+  Compile PORTVAL.cbl with ENTITY-COPY.cpy on the COBCPY path.
+  Run each scenario by setting ENTITY_ID env var before execution.
+  Capture DISPLAY output and compare against EXPECTED lines below.
+  A FAIL on any TC must block the PR merge.
+
+----------------------------------------------------------------------
+TC01 — SG BASELINE PRESERVATION
+----------------------------------------------------------------------
+SETUP : ENTITY_ID=SG  (or unset — default must be SG)
+COMPILE:
+  cobc -x -free PORTVAL.cbl -I cobol/
+RUN:
+  ENTITY_ID=SG ./PORTVAL 2>&1 | tee tc01.out
+
+EXPECTED output fragments (grep assertions):
+  grep -q 'ENTITY-CODE.*SG'           tc01.out  || echo FAIL-TC01-entity
+  grep -q 'CURRENCY.*SGD'             tc01.out  || echo FAIL-TC01-currency
+  grep -q 'LOCALE.*en_SG'             tc01.out  || echo FAIL-TC01-locale
+  grep -q 'REGULATOR.*MAS'            tc01.out  || echo FAIL-TC01-regulator
+  grep -q 'BOOKING-CENTRE.*Singapore' tc01.out  || echo FAIL-TC01-booking
+  grep -q 'MGMT-FEE-BPS.*050'         tc01.out  || echo FAIL-TC01-fee
+  grep -q 'LARGE-POS-THRESHOLD.*000250000' tc01.out || echo FAIL-TC01-threshold
+  grep -q 'SUITABILITY.*MAS_FAA_2002' tc01.out  || echo FAIL-TC01-suitability
+  grep -q 'KMS-VAULT.*wealth-sg'      tc01.out  || echo FAIL-TC01-kms
+PASS CRITERIA: zero FAIL lines printed.
+
+----------------------------------------------------------------------
+TC02 — HK ENTITY SWITCH
+----------------------------------------------------------------------
+SETUP : ENTITY_ID=HK
+RUN:
+  ENTITY_ID=HK ./PORTVAL 2>&1 | tee tc02.out
+
+EXPECTED output fragments:
+  grep -q 'ENTITY-CODE.*HK'           tc02.out  || echo FAIL-TC02-entity
+  grep -q 'CURRENCY.*HKD'             tc02.out  || echo FAIL-TC02-currency
+  grep -q 'LOCALE.*en_HK'             tc02.out  || echo FAIL-TC02-locale
+  grep -q 'REGULATOR.*SFC'            tc02.out  || echo FAIL-TC02-regulator
+  grep -q 'BOOKING-CENTRE.*Hong Kong' tc02.out  || echo FAIL-TC02-booking
+  grep -q 'MGMT-FEE-BPS.*060'         tc02.out  || echo FAIL-TC02-fee
+  grep -q 'LARGE-POS-THRESHOLD.*001000000' tc02.out || echo FAIL-TC02-threshold
+  grep -q 'SUITABILITY.*SFC_COP_2019' tc02.out  || echo FAIL-TC02-suitability
+  grep -q 'KMS-VAULT.*wealth-hk'      tc02.out  || echo FAIL-TC02-kms
+PASS CRITERIA: zero FAIL lines printed.
+
+----------------------------------------------------------------------
+TC03 — CH ENTITY SWITCH
+----------------------------------------------------------------------
+SETUP : ENTITY_ID=CH
+RUN:
+  ENTITY_ID=CH ./PORTVAL 2>&1 | tee tc03.out
+
+EXPECTED output fragments:
+  grep -q 'ENTITY-CODE.*CH'             tc03.out  || echo FAIL-TC03-entity
+  grep -q 'CURRENCY.*CHF'               tc03.out  || echo FAIL-TC03-currency
+  grep -q 'LOCALE.*de_CH'               tc03.out  || echo FAIL-TC03-locale
+  grep -q 'REGULATOR.*FINMA'            tc03.out  || echo FAIL-TC03-regulator
+  grep -q 'BOOKING-CENTRE.*Zurich'      tc03.out  || echo FAIL-TC03-booking
+  grep -q 'MGMT-FEE-BPS.*080'           tc03.out  || echo FAIL-TC03-fee
+  grep -q 'LARGE-POS-THRESHOLD.*005000000' tc03.out || echo FAIL-TC03-threshold
+  grep -q 'SUITABILITY.*FINMA_LSFin_2020' tc03.out || echo FAIL-TC03-suitability
+  grep -q 'KMS-VAULT.*wealth-ch'        tc03.out  || echo FAIL-TC03-kms
+PASS CRITERIA: zero FAIL lines printed.
+
+----------------------------------------------------------------------
+TC04 — MISSING / INVALID ENTITY DEFAULTS TO SG
+----------------------------------------------------------------------
+SETUP : unset ENTITY_ID  (simulate missing / empty)
+RUN:
+  unset ENTITY_ID && ./PORTVAL 2>&1 | tee tc04.out
+
+EXPECTED: same assertions as TC01 (SG defaults apply).
+  grep -q 'ENTITY-CODE.*SG'           tc04.out  || echo FAIL-TC04-default-entity
+  grep -q 'CURRENCY.*SGD'             tc04.out  || echo FAIL-TC04-default-currency
+  grep -q 'REGULATOR.*MAS'            tc04.out  || echo FAIL-TC04-default-regulator
+  grep -q 'KMS-VAULT.*wealth-sg'      tc04.out  || echo FAIL-TC04-default-kms
+ALSO RUN with bogus value:
+  ENTITY_ID=XX ./PORTVAL 2>&1 | tee tc04b.out
+  grep -q 'ENTITY-CODE.*SG'           tc04b.out || echo FAIL-TC04-bogus-default
+PASS CRITERIA: zero FAIL lines printed for both tc04 and tc04b.
+
+----------------------------------------------------------------------
+TC05 — CROSS-ENTITY FEE-BPS & THRESHOLD DIFFER (SG vs HK vs CH)
+----------------------------------------------------------------------
+ASSERTION (bash arithmetic, using captured output files from TC01-TC03):
+
+# Extract numeric fee values and assert ordering: SG(50) < HK(60) < CH(80)
+SG_FEE=$(grep 'MGMT-FEE-BPS' tc01.out | grep -oP '[0-9]{3}' | head -1)
+HK_FEE=$(grep 'MGMT-FEE-BPS' tc02.out | grep -oP '[0-9]{3}' | head -1)
+CH_FEE=$(grep 'MGMT-FEE-BPS' tc03.out | grep -oP '[0-9]{3}' | head -1)
+[ "$SG_FEE" = '050' ] || echo FAIL-TC05-sg-fee-value
+[ "$HK_FEE" = '060' ] || echo FAIL-TC05-hk-fee-value
+[ "$CH_FEE" = '080' ] || echo FAIL-TC05-ch-fee-value
+[ "$SG_FEE" -lt "$HK_FEE" ] || echo FAIL-TC05-sg-lt-hk
+[ "$HK_FEE" -lt "$CH_FEE" ] || echo FAIL-TC05-hk-lt-ch
+
+# Threshold ordering: SG(250000) < HK(1000000) < CH(5000000)
+SG_THR=$(grep 'LARGE-POS-THRESHOLD' tc01.out | grep -oP '[0-9]{9}' | head -1)
+HK_THR=$(grep 'LARGE-POS-THRESHOLD' tc02.out | grep -oP '[0-9]{9}' | head -1)
+CH_THR=$(grep 'LARGE-POS-THRESHOLD' tc03.out | grep -oP '[0-9]{9}' | head -1)
+[ "$SG_THR" = '000250000' ] || echo FAIL-TC05-sg-threshold
+[ "$HK_THR" = '001000000' ] || echo FAIL-TC05-hk-threshold
+[ "$CH_THR" = '005000000' ] || echo FAIL-TC05-ch-threshold
+PASS CRITERIA: zero FAIL lines printed.
+
+----------------------------------------------------------------------
+TC06 — SECRET REFERENCES CONTAIN NO PLAINTEXT — ONLY KEYVAULT REFS
+----------------------------------------------------------------------
+SETUP: grep source + output for plaintext secret patterns.
+
+# Source-level check (no plaintext passwords/keys in .cbl or .cpy):
+grep -rniE '(password|passwd|secret\s*=\s*[^$]|api.?key\s*=\s*[^$])' \
+  cobol/PORTVAL.cbl cobol/ENTITY-COPY.cpy && echo FAIL-TC06-plaintext-in-source
+
+# Runtime output must contain KeyVault reference pattern, not raw value:
+for OUT in tc01.out tc02.out tc03.out; do
+  grep -q '\${KEYVAULT:wealth-' "$OUT" || echo FAIL-TC06-no-keyvault-ref-in-$OUT
+  grep -iE 'password=.{4}|api_key=.{4}' "$OUT" && echo FAIL-TC06-plaintext-in-$OUT
+done
+PASS CRITERIA: zero FAIL lines printed.
+
+----------------------------------------------------------------------
+COMPILE-TIME REGRESSION GATE
+----------------------------------------------------------------------
+# Must compile clean (no errors) for all three entity configs:
+cobc -x -free -I cobol/ cobol/PORTVAL.cbl -o /tmp/PORTVAL_ci \
+  && echo COMPILE-OK || echo FAIL-COMPILE
+
+# ENTITY-COPY.cpy must exist and be non-empty:
+[ -s cobol/ENTITY-COPY.cpy ] && echo CPY-OK || echo FAIL-CPY-MISSING
+
+======================================================================
+END OF SANITY CHECK FILE
+======================================================================
