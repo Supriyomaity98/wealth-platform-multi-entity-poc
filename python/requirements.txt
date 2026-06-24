@@ -1,4 +1,1 @@
 pytest
-PyYAML
-azure-keyvault-secrets
-azure-identity
