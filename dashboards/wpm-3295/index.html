@@ -1,0 +1,402 @@
+<!doctype html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Wand Engineering Squad - Run Dashboard - WPM-3295</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.6/dist/mermaid.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      :root { color-scheme: light dark;
+        --bg:#0a0a14; --bg-2:#0f0f1c;
+        --panel:#13131f; --panel-2:#1c1c2e; --panel-3:#23233a;
+        --text:#f0f0fa; --muted:#8a8aa3;
+        --acc:#8b5cf6; --acc-2:#a78bfa; --acc-3:#c4b5fd;
+        --acc-glow: rgba(139,92,246,.25);
+        --ok:#10b981; --warn:#f59e0b; --err:#ef4444;
+        --border:#2a2a40; --border-strong:#3a3a55;
+      }
+      body.light { --bg:#fafafe; --bg-2:#f3f3fb; --panel:#ffffff; --panel-2:#f7f7fd; --panel-3:#eeeef8; --text:#0f0f1a; --muted:#5a5a78; --border:#e4e4f0; --border-strong:#d0d0e0; --acc-glow: rgba(139,92,246,.15); }
+      * { box-sizing: border-box; }
+      body { background:var(--bg); color:var(--text); font:14px/1.55 "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; letter-spacing:-0.005em; }
+      code, pre, .mono { font-family:"JetBrains Mono",ui-monospace,Menlo,monospace; font-variant-ligatures:none; }
+      header { padding:20px 28px; background:linear-gradient(180deg,var(--panel) 0%,var(--bg) 100%); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; position:relative; }
+      header::before { content:""; position:absolute; inset:0; background:radial-gradient(800px 200px at 20% -20%, var(--acc-glow), transparent 60%); pointer-events:none; }
+      header > * { position:relative; }
+      .brand { display:flex; align-items:center; gap:10px; }
+      .brand-mark { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,var(--acc) 0%,var(--acc-2) 60%,var(--acc-3) 100%); box-shadow:0 0 24px var(--acc-glow); display:flex; align-items:center; justify-content:center; font-weight:700; color:white; font-size:14px; }
+      header h1 { margin:0; font-size:17px; font-weight:600; letter-spacing:-0.01em; }
+      header h1 .sub { color:var(--muted); font-weight:500; }
+      header .meta { color:var(--muted); font-size:12px; margin-top:2px; }
+      header a { color:var(--acc-2); text-decoration:none; }
+      header a:hover { color:var(--acc-3); }
+      main { padding:22px 28px; display:grid; grid-template-columns: 1fr 300px; gap:20px; }
+      .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-bottom:16px; }
+      .kpi { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px 16px; position:relative; overflow:hidden; transition:border-color .15s, transform .15s; }
+      .kpi::after { content:""; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--acc),var(--acc-2)); opacity:0; transition:opacity .15s; }
+      .kpi:hover { border-color:var(--border-strong); transform:translateY(-1px); }
+      .kpi:hover::after { opacity:1; }
+      .kpi .label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-weight:600; }
+      .kpi .value { font-size:26px; font-weight:700; margin-top:4px; letter-spacing:-0.02em; background:linear-gradient(135deg,var(--text) 0%,var(--acc-3) 200%); -webkit-background-clip:text; background-clip:text; }
+      .tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:14px; flex-wrap:wrap; padding-bottom:0; }
+      .tab { padding:10px 14px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; font-size:13px; font-weight:500; transition:color .12s, border-color .12s, background .12s; border-radius:6px 6px 0 0; }
+      .tab:hover { color:var(--text); background:var(--panel-2); }
+      .tab.active { color:var(--acc-3); border-color:var(--acc); background:var(--panel-2); }
+      .panel { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:18px; }
+      .panel h3 { margin:0 0 12px; font-size:15px; font-weight:600; letter-spacing:-0.01em; }
+      .grid { display:grid; gap:12px; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .card { background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:14px; transition:border-color .15s; }
+      .card:hover { border-color:var(--border-strong); }
+      .card h4 { margin:0 0 10px; font-size:13px; font-weight:600; color:var(--acc-3); letter-spacing:-0.005em; }
+      .lang { font-size:10px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:.06em; }
+      .kv { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:3px 0; gap:8px; }
+      .kv b, .kv code { color:var(--text); font-weight:500; }
+      .kv code { font-size:11px; background:var(--panel-3); padding:1px 6px; border-radius:4px; }
+      table { width:100%; border-collapse:collapse; font-size:13px; }
+      th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--border); }
+      th { color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.06em; }
+      tbody tr:hover { background:var(--panel-2); }
+      details.pr { background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin:10px 0; transition:border-color .15s; }
+      details.pr[open] { border-color:var(--acc); box-shadow:0 0 0 1px var(--acc-glow); }
+      details.pr summary { cursor:pointer; font-size:14px; font-weight:500; }
+      .status { font-size:10px; padding:3px 9px; border-radius:999px; margin-left:8px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+      .status-merged { background:rgba(16,185,129,.15); color:var(--ok); border:1px solid rgba(16,185,129,.3); }
+      .status-open   { background:rgba(245,158,11,.15); color:var(--warn); border:1px solid rgba(245,158,11,.3); }
+      .status-failed { background:rgba(239,68,68,.15); color:var(--err); border:1px solid rgba(239,68,68,.3); }
+      .diff { margin-top:12px; }
+      .diff-file { font-family:"JetBrains Mono",ui-monospace,monospace; font-size:12px; color:var(--muted); margin-bottom:8px; padding:4px 8px; background:var(--panel-3); border-radius:6px; display:inline-block; }
+      .diff-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .diff-cols h5 { margin:0 0 6px; font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+      .diff pre { background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:10px; font:12px/1.5 "JetBrains Mono",ui-monospace,Menlo,monospace; overflow:auto; max-height:280px; }
+      .prio { display:inline-block; font-size:10px; padding:2px 8px; border-radius:999px; margin-right:8px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; }
+      .prio-P0, .prio-high   { background:rgba(239,68,68,.15); color:var(--err); border:1px solid rgba(239,68,68,.3); }
+      .prio-P1, .prio-medium { background:rgba(245,158,11,.15); color:var(--warn); border:1px solid rgba(245,158,11,.3); }
+      .prio-P2, .prio-low    { background:rgba(16,185,129,.15); color:var(--ok); border:1px solid rgba(16,185,129,.3); }
+      aside { display:flex; flex-direction:column; gap:14px; }
+      aside .panel a { display:block; padding:8px 0; color:var(--acc-2); text-decoration:none; font-size:13px; border-bottom:1px solid var(--border); transition:color .12s, padding-left .12s; }
+      aside .panel a:hover { color:var(--acc-3); padding-left:4px; }
+      aside .panel a:last-child { border-bottom:0; }
+      .mermaid { background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:16px; }
+      ul { padding-left:20px; margin:8px 0; }
+      ul li { margin:6px 0; }
+      ul li small { color:var(--muted); }
+      p { margin:8px 0; }
+      textarea { width:100%; min-height:90px; background:var(--bg-2); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:10px; font:13px "JetBrains Mono",ui-monospace,Menlo,monospace; resize:vertical; transition:border-color .12s; }
+      textarea:focus { outline:none; border-color:var(--acc); box-shadow:0 0 0 3px var(--acc-glow); }
+      button { background:var(--acc); color:white; border:0; padding:7px 14px; border-radius:999px; cursor:pointer; font:500 13px "Inter",sans-serif; transition:background .12s, transform .08s; }
+      button:hover { background:var(--acc-2); }
+      button:active { transform:translateY(1px); }
+      button.ghost { background:transparent; color:var(--text); border:1px solid var(--border-strong); }
+      button.ghost:hover { background:var(--panel-2); border-color:var(--acc); color:var(--acc-3); }
+      footer { padding:16px 28px; color:var(--muted); font-size:11px; text-align:center; border-top:1px solid var(--border); letter-spacing:.02em; }
+      /* .hide simply hides inactive tabs. Mermaid is rendered once on
+         load while all tabs are briefly visible (see script below). */
+      .hide { display:none; }
+      a { color:var(--acc-2); text-decoration:none; }
+      a:hover { color:var(--acc-3); text-decoration:underline; }
+      ::selection { background:var(--acc-glow); color:var(--text); }
+      @media (max-width: 900px) { main { grid-template-columns: 1fr; } .grid-2, .grid-3 { grid-template-columns: 1fr; } .diff-cols { grid-template-columns: 1fr; } }
+    </style>
+    </head>
+    <body style="visibility:hidden">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">W</div>
+        <div>
+          <h1>Wand <span class="sub">/ Engineering Squad</span></h1>
+          <div class="meta">Ticket <a href="https://wandplatform.atlassian.net/browse/WPM-3295">WPM-3295</a> &middot; Sprint Sprint-2026.26 &middot; Generated 2026-06-24T17:57:33Z</div>
+        </div>
+      </div>
+      <div>
+        <button class="ghost" onclick="document.body.classList.toggle('light')">Toggle theme</button>
+      </div>
+    </header>
+    <main>
+      <section>
+        <div class="kpis">
+          <div class="kpi"><div class="label">Agents in squad</div><div class="value">11</div></div>
+          <div class="kpi"><div class="label">Jira tickets</div><div class="value">1</div></div>
+          <div class="kpi"><div class="label">PRs opened</div><div class="value">4 / 4</div></div>
+          <div class="kpi"><div class="label">PRs merged</div><div class="value">0</div></div>
+          <div class="kpi"><div class="label">QA tests added</div><div class="value">24</div></div>
+          <div class="kpi"><div class="label">Human gates</div><div class="value">2 / 2</div></div>
+          <div class="kpi"><div class="label">Knowledge Vault</div><div class="value">8</div></div>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="overview">Overview</div>
+          <div class="tab" data-tab="workflow">Workflow</div>
+          <div class="tab" data-tab="architecture">Architecture</div>
+          <div class="tab" data-tab="squad">Squad</div>
+          <div class="tab" data-tab="prs">PRs &amp; Diffs</div>
+          <div class="tab" data-tab="qa">QA</div>
+          <div class="tab" data-tab="learning">Learning cycle</div>
+          <div class="tab" data-tab="vault">Knowledge Vault</div>
+          <div class="tab" data-tab="audit">Audit</div>
+        </div>
+
+        <div class="tab-panel" id="tab-overview">
+          <div class="panel">
+            <h3>Executive summary</h3>
+            <p>The refactor cycle succeeded in establishing strict entity context controls, but residual hardcoded logic, incomplete secret migration, and legacy table gaps remain in every stack. QA coverage fell below the mandate, sustaining a known risk pattern and especially impacting COBOL. CI guardrails targeting hardcode elimination, test-count floors, and secret scans are critical to closing compliance and audit gaps. Full secret migration, partitioning, and refined COBOL resourcing will likely yield complete payoff next cycle, saving an estimated 16 hours.</p>
+            <div class="grid grid-3">
+    <div class="card"><h4>Outcome</h4>0 of 4 PRs merged to main. 4 opened, 24 QA tests added.</div>
+    <div class="card"><h4>Entities live</h4>HK, CH (home: SG)</div>
+    <div class="card"><h4>Savings projected</h4>16 hours saved next cycle (high confidence, payoff in 1 cycle(s))</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-workflow">
+          <div class="panel"><h3>Workflow</h3><div class="mermaid">flowchart LR
+  S["Setup"] --> PO["Product Owner"]
+  PO --> BA["Business Analyst"]
+  BA --> REG["Regulatory SME"]
+  REG --> SA["Solution Architect"]
+  SA --> EM["Engineering Manager"]
+  EM --> ENG["Senior Engineers x4<br/>(parallel)"]
+  ENG --> QA["QA Engineer"]
+  QA --> CI["CI Checks"]
+  CI --> G2["Gate 2: PR review"]
+  G2 --> CL["Capture Learnings"]
+  CL --> BUN["Bundle"]
+  BUN --> G3["Gate 3: Merge"]
+  G3 --> MRG["Merge PRs"]
+  MRG --> LA["Learning Advisor"]
+  LA --> VAU["Knowledge Vault"]
+  VAU --> DASH["Dashboard"]
+  DASH --> EMAIL["Final Email"]</div></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-architecture">
+          <div class="panel"><h3>Architecture</h3><div class="mermaid">flowchart LR
+  subgraph CFG["Per-entity configs"]
+    HK["HK.yaml"]
+    CH["CH.yaml"]
+  end
+  CFG --> CTX["EntityContext / Resolver"]
+  CTX --> APP["wealth-platform app code<br/>(entity-aware)"]
+  APP --> KV["Azure Key Vault<br/>(secret refs)"]
+  APP --> DB["DB schema<br/>(entity_id column)"]</div></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-squad">
+          <div class="panel"><h3>Squad - 4 engineers + PO/BA/Reg/SA/EM/QA/CoS</h3>
+            <div class="grid grid-3"><div class="card"><h4>Anna - Senior Database Engineer (SQL) <span class="lang">[SQL]</span></h4><div class="kv"><span>Package</span><b>WP-SQL</b></div><div class="kv"><span>Branch</span><code>refactor/sql-entity-context</code></div><div class="kv"><span>Files</span>2</div><div class="kv"><span>+lines</span>142</div><div class="kv"><span>-lines</span>18</div></div><div class="card"><h4>Gaurav - Senior Backend Engineer (Java) <span class="lang">[Java]</span></h4><div class="kv"><span>Package</span><b>WP-JAVA</b></div><div class="kv"><span>Branch</span><code>refactor/java-entity-context</code></div><div class="kv"><span>Files</span>6</div><div class="kv"><span>+lines</span>145</div><div class="kv"><span>-lines</span>12</div></div><div class="card"><h4>Mei - Senior Mainframe Engineer (COBOL) <span class="lang">[COBOL]</span></h4><div class="kv"><span>Package</span><b>WP-COBOL</b></div><div class="kv"><span>Branch</span><code>refactor/cobol-entity-context</code></div><div class="kv"><span>Files</span>2</div><div class="kv"><span>+lines</span>78</div><div class="kv"><span>-lines</span>14</div></div><div class="card"><h4>Diego - Senior Data Engineer (Python) <span class="lang">[Python]</span></h4><div class="kv"><span>Package</span><b>WP-PYTHON</b></div><div class="kv"><span>Branch</span><code>refactor/python-entity-context</code></div><div class="kv"><span>Files</span>4</div><div class="kv"><span>+lines</span>62</div><div class="kv"><span>-lines</span>14</div></div></div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-prs">
+          <div class="panel"><h3>Pull requests &amp; sample diffs</h3><details class="pr"><summary><b>PR #20</b> - WP-SQL <span class="status status-open">open</span></summary><div class="kv"><span>Author</span>Anna - Senior Database Engineer (SQL)</div><div class="kv"><span>Branch</span><code>refactor/sql-entity-context-1782323688</code></div><div class="kv"><span>Files changed</span>2</div><div class="kv"><span>+/-</span>+142 / -18</div><div class="kv"><span>URL</span><a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/20" target="_blank" rel="noopener">https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/20</a></div><div class="diff"><div class="diff-file">sql/schema.sql</div><div class="diff-cols"><div><h5>Before</h5><pre>CREATE TABLE portfolio (
+    portfolio_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id         UUID NOT NULL REFERENCES client (client_id),
+    base_currency     CHAR(3)      NOT NULL DEFAULT &#x27;SGD&#x27;,
+    booking_centre    VARCHAR(50)  NOT NULL DEFAULT &#x27;Singapore&#x27;,
+    mgmt_fee_bps      INTEGER      NOT NULL DEFAULT 50,
+    market_value      NUMERIC(18, 2)
+);</pre></div><div><h5>After</h5><pre>CREATE TABLE portfolio (
+    portfolio_id      UUID         NOT NULL DEFAULT gen_random_uuid(),
+    entity_id         CHAR(2)      NOT NULL DEFAULT &#x27;SG&#x27;,
+    client_id         UUID         NOT NULL,
+    base_currency     CHAR(3)      NOT NULL DEFAULT &#x27;SGD&#x27;,
+    booking_centre    VARCHAR(50)  NOT NULL DEFAULT &#x27;Singapore&#x27;,
+    mgmt_fee_bps      INTEGER      NOT NULL DEFAULT 50,
+    market_value      NUMERIC(18, 2),
+    PRIMARY KEY (portfolio_id, entity_id),
+    CONSTRAINT chk_portfolio_entity CHECK (entity_id IN (&#x27;SG&#x27;,&#x27;HK&#x27;,&#x27;CH&#x27;)),
+    CONSTRAINT fk_portfolio_client
+        FOREIGN KEY (client_id, entity_id)
+        REFERENCES client (client_id, entity_id)
+);</pre></div></div></div></details><details class="pr"><summary><b>PR #21</b> - WP-JAVA <span class="status status-open">open</span></summary><div class="kv"><span>Author</span>Gaurav - Senior Backend Engineer (Java)</div><div class="kv"><span>Branch</span><code>refactor/java-entity-context-1782323688</code></div><div class="kv"><span>Files changed</span>2</div><div class="kv"><span>+/-</span>+145 / -12</div><div class="kv"><span>URL</span><a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/21" target="_blank" rel="noopener">https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/21</a></div><div class="diff"><div class="diff-file">java/src/main/java/com/acme/wealth/AccountController.java</div><div class="diff-cols"><div><h5>Before</h5><pre>private static final Currency CURRENCY = Currency.getInstance(&quot;SGD&quot;);
+    private static final Locale LOCALE = new Locale(&quot;en&quot;, &quot;SG&quot;);
+    private static final String REGULATOR = &quot;MAS&quot;;
+    private static final String BOOKING_CENTRE = &quot;Singapore&quot;;
+    private static final BigDecimal MGMT_FEE_BPS = new BigDecimal(&quot;50&quot;);
+    private static final BigDecimal LARGE_POSITION_THRESHOLD = new BigDecimal(&quot;250000&quot;);</pre></div><div><h5>After</h5><pre>private final EntityContext ctx = EntityContext.getInstance();
+
+    private final Currency currency = Currency.getInstance(ctx.getCurrency());
+    private final Locale locale = ctx.getJavaLocale();
+    private final String regulator = ctx.getRegulator();
+    private final String bookingCentre = ctx.getBookingCentre();
+    private final BigDecimal mgmtFeeBps = ctx.getFeeBps();
+    private final BigDecimal largePositionThreshold = ctx.getLargePositionThreshold();
+    private final String entityId = ctx.getEntityId();</pre></div></div></div></details><details class="pr"><summary><b>PR #22</b> - WP-COBOL <span class="status status-open">open</span></summary><div class="kv"><span>Author</span>Mei - Senior Mainframe Engineer (COBOL)</div><div class="kv"><span>Branch</span><code>refactor/cobol-entity-context-1782323688</code></div><div class="kv"><span>Files changed</span>1</div><div class="kv"><span>+/-</span>+78 / -14</div><div class="kv"><span>URL</span><a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/22" target="_blank" rel="noopener">https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/22</a></div><div class="diff"><div class="diff-file">cobol/PORTVAL.cbl</div><div class="diff-cols"><div><h5>Before</h5><pre>01  WS-ENTITY-CODE           PIC X(02) VALUE &quot;SG&quot;.
+       01  WS-CURRENCY              PIC X(03) VALUE &quot;SGD&quot;.
+       01  WS-LOCALE                PIC X(05) VALUE &quot;en_SG&quot;.
+       01  WS-REGULATOR             PIC X(03) VALUE &quot;MAS&quot;.
+       01  WS-BOOKING-CENTRE        PIC X(12) VALUE &quot;Singapore&quot;.
+       01  WS-MGMT-FEE-BPS          PIC 9(03) VALUE 50.
+       01  WS-LARGE-POS-THRESHOLD   PIC 9(09)V99
+                                      VALUE 250000.00.</pre></div><div><h5>After</h5><pre>COPY ENTITY-COPY.
+       01  WS-ENV-ENTITY-ID         PIC X(02) VALUE SPACES.
+       01  WS-ENTITY-CODE           PIC X(02) VALUE SPACES.
+       01  WS-CURRENCY              PIC X(03) VALUE SPACES.
+      *... fields initialized at runtime in 0500-LOAD-ENTITY-CONFIG
+      *... via ACCEPT WS-ENV-ENTITY-ID FROM ENVIRONMENT &quot;ENTITY_ID&quot;
+      *... EVALUATE dispatches to SG/HK/CH canonical values</pre></div></div></div></details><details class="pr"><summary><b>PR #23</b> - WP-PYTHON <span class="status status-open">open</span></summary><div class="kv"><span>Author</span>Diego - Senior Data Engineer (Python)</div><div class="kv"><span>Branch</span><code>refactor/python-entity-context-1782323688</code></div><div class="kv"><span>Files changed</span>1</div><div class="kv"><span>+/-</span>+62 / -14</div><div class="kv"><span>URL</span><a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/23" target="_blank" rel="noopener">https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc/pull/23</a></div><div class="diff"><div class="diff-file">python/risk_report.py</div><div class="diff-cols"><div><h5>Before</h5><pre>ENTITY_CODE = &quot;SG&quot;
+ENTITY_NAME = &quot;Singapore&quot;
+REGULATOR = &quot;MAS&quot;
+CURRENCY = &quot;SGD&quot;
+LOCALE = &quot;en_SG&quot;
+DATA_REGION = &quot;ap-southeast-1&quot;
+MGMT_FEE_BPS = Decimal(&quot;50&quot;)
+LARGE_POSITION_THRESHOLD = Decimal(&quot;250000&quot;)
+SUITABILITY_FRAMEWORK = &quot;MAS-Notice-FAA&quot;</pre></div><div><h5>After</h5><pre>_entity_id = os.environ.get(&quot;ENTITY_ID&quot;, &quot;SG&quot;).upper()
+if _entity_id not in _ALLOWED_ENTITIES:
+    raise ValueError(f&quot;Invalid ENTITY_ID &#x27;{_entity_id}&#x27;.&quot;)
+with open(_CONFIG_DIR / f&quot;{_entity_id}.yaml&quot;) as _f:
+    _cfg = yaml.safe_load(_f)
+CURRENCY = _cfg[&quot;currency&quot;]
+REGULATOR = _cfg[&quot;regulator&quot;]
+MGMT_FEE_BPS = Decimal(str(_cfg[&quot;fee_bps&quot;]))
+DB_CONNECTION_SECRET = f&quot;${{KEYVAULT:{_cfg[&#x27;kms_vault_name&#x27;]}-db-connection-string}}&quot;</pre></div></div></div></details></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-qa">
+          <div class="panel"><h3>QA per package</h3>
+            <table><thead><tr><th>Package</th><th>Lang</th><th>Verdict</th><th>Tests</th><th>Notes</th></tr></thead>
+            <tbody><tr><td><b>WP-SQL</b></td><td>SQL</td><td>Pass with notes</td><td>6</td><td>SG baseline is fully preserved via DEFAULT &#x27;SG&#x27; and matching column defaults (SGD, Singapore, 50). Residual hardcodes on</td></tr><tr><td><b>WP-JAVA</b></td><td>Java</td><td>Pass with notes</td><td>6</td><td>All SG canonical values are preserved by the EntityContext singleton replacing prior hardcodes; disclosure text strings </td></tr><tr><td><b>WP-COBOL</b></td><td>COBOL</td><td>Pass with notes</td><td>6</td><td>SG baseline values (SGD/MAS/50bps/250000 threshold) are preserved exactly via EVALUATE block driven by ENTITY_ID; the st</td></tr><tr><td><b>WP-PYTHON</b></td><td>Python</td><td>Pass with notes</td><td>6</td><td>All six canonical entity values load correctly when ENTITY_ID is set before module import via importlib.reload; DB_CONNE</td></tr></tbody></table>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-learning">
+          <div class="panel">
+            <h3>Learning cycle - intelligence layer</h3>
+            <p><b>Executive summary:</b> The refactor cycle succeeded in establishing strict entity context controls, but residual hardcoded logic, incomplete secret migration, and legacy table gaps remain in every stack. QA coverage fell below the mandate, sustaining a known risk pattern and especially impacting COBOL. CI guardrails targeting hardcode elimination, test-count floors, and secret scans are critical to closing compliance and audit gaps. Full secret migration, partitioning, and refined COBOL resourcing will likely yield complete payoff next cycle, saving an estimated 16 hours.</p>
+            <div class="grid grid-2">
+    <div class="card"><h4>Observations</h4><ul><li><b>o1</b> - Residual entity-specific hardcoded logic is present in every stack despite refactor attempts.<br/><small>Evidence: Engineer outputs flagged 1 SQL, 1 Java, 2 COBOL, and 2 Python residual hardcodes.</small></li>
+<li><b>o2</b> - QA test coverage per package remains at 6, below the hardcode-risk floor set by previous cycles.<br/><small>Evidence: QA verdicts are &#x27;Pass with notes&#x27; in all packages, with tests=6 per package.</small></li>
+<li><b>o3</b> - Secrets remain exposed in plaintext configuration files, leaving the environment vulnerable.<br/><small>Evidence: Plaintext YAML secrets are reported as not yet fully migrated to Key Vault (pitfall documented).</small></li>
+<li><b>o4</b> - Database compliance gaps exist due to unpartitioned legacy tables, risking regulatory breach.<br/><small>Evidence: Legacy/reference tables lack entity_id partitioning (pitfall documented).</small></li>
+<li><b>o5</b> - Code improvements are not live, delaying actual compliance and audit benefits.<br/><small>Evidence: All 4 PRs are in rehearsal; none merged to main.</small></li></ul></div>
+    <div class="card"><h4>Patterns detected</h4><ul><li>Residual hardcodes cluster when QA test count is at or below 6 (as in seeded baseline v7 and confirmed this cycle).</li>
+<li>COBOL tasks consistently present higher residual hardcode counts, aligning with prior cycle risk and effort underestimation.</li>
+<li>Incomplete Key Vault migration persists at cycle sign-off, echoing repeated next-step recommendations from previous runs.</li></ul></div>
+    <div class="card"><h4>Recommendations (ranked)</h4><ul><li><span class="prio prio-P0">P0</span> <b>Eliminate all flagged entity-specific hardcodes in SQL, Java, COBOL, and Python before merge.</b> (Tech Lead (with stack DEs), ~12h)<br/><small>Ensures regulatory compliance and prevents cross-entity leakage; aligns with mandated architecture.</small></li>
+<li><span class="prio prio-P0">P0</span> <b>Mandate QA minimum 8 test cases per package if hardcodes are detected (enforced via CI test-count check).</b> (QA Lead, ~4h)<br/><small>Mitigates recurring risk where low test coverage correlates with undetected hardcoded logic.</small></li>
+<li><span class="prio prio-P1">P1</span> <b>Complete Key Vault secrets migration and remove plaintext secrets from YAML configs in production.</b> (SecOps, ~8h)<br/><small>Reduces credential exposure risk and meets HK/CH security mandates.</small></li>
+<li><span class="prio prio-P1">P1</span> <b>Partition all remaining legacy/reference tables by entity_id (SQL migration, data backfill).</b> (Database Engineer, ~10h)<br/><small>Eliminates residual data residency breach and audit non-conformance risks.</small></li>
+<li><span class="prio prio-P2">P2</span> <b>Apply 1.5x standard effort buffer for COBOL remediation and regression, per prior underestimation.</b> (EM/Delivery Manager, ~0h)<br/><small>Addresses recurring COBOL risk; prevents missed deadlines.</small></li></ul></div>
+    <div class="card"><h4>Guardrails for next cycle</h4><ul><li><b>Must not merge any PR if entity-specific logic or references (e.g., &#x27;SG&#x27;, &#x27;HK&#x27;, &#x27;CH&#x27;) are found in source outside of config/mapping locations.</b><br/><small>Enforced by: <code>CI static scan job: entity-hardcode-check</code></small></li>
+<li><b>Must require entity_id partitioning in all newly-refactored or legacy-regulated tables.</b><br/><small>Enforced by: <code>DB migration reviewer checklist; enforced via code review template</code></small></li>
+<li><b>Must not allow deployment if any YAML config in production contains secret values.</b><br/><small>Enforced by: <code>CI scan: yaml-secrets-linter</code></small></li>
+<li><b>Must enforce minimum QA test count of 8 for any package where hardcode flags are raised.</b><br/><small>Enforced by: <code>CI gate: qa-test-count-check</code></small></li></ul></div>
+    <div class="card"><h4>Risk flags</h4><ul><li><span class="prio prio-high">high</span> Residual hardcoded logic in source increases risk of cross-entity data leakage and audit breach.<br/><small>Mitigation: Automated static analysis with merge block on detection; urgent DE review before release.</small></li>
+<li><span class="prio prio-medium">medium</span> Plaintext YAML secrets in production raise vulnerability to credential theft.<br/><small>Mitigation: Finalise Key Vault migration with CI-enforced pre-deploy secret check.</small></li>
+<li><span class="prio prio-medium">medium</span> Unpartitioned legacy tables remain a compliance and residency audit risk.<br/><small>Mitigation: Priority SQL migration and extended regression before enabling new entity provisioning.</small></li></ul></div>
+    <div class="card"><h4>Estimated savings</h4><p><b>16</b> hours / cycle, payoff in <b>1</b> cycle(s), confidence <b>high</b>.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-vault">
+          <div class="panel">
+            <h3>Knowledge Vault - 8 entries (this cycle adds <b>v8</b>)</h3>
+            <p>The Knowledge Vault persists every cycle's intelligence layer. Next cycle's Learning Advisor reads this before producing its own recommendations - the feedback loop.</p>
+            <p>
+    <a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/vault/wpm-3295/v8.json" target="_blank" rel="noopener"><button>Open latest entry (v8)</button></a>
+    <a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/vault/wpm-3295/index.json" target="_blank" rel="noopener"><button class="ghost">Open full index</button></a>
+            </p>
+            <table><thead><tr><th>Version</th><th>Sprint</th><th>Headline</th><th>Status</th></tr></thead>
+            <tbody><tr><td><b>v8</b></td><td>Sprint-2026.26</td><td>The refactor cycle succeeded in establishing strict entity context controls, but residual hardcoded logic, incomplete secret migration, a...</td><td>captured</td></tr><tr><td><b>v7</b></td><td>FY25-Q3-S08</td><td>QA test count &lt;= 6 per package correlates with residual hardcodes &gt;= 2. Floor at 8 tests when flagged.</td><td>adopted</td></tr><tr><td><b>v6</b></td><td>FY25-Q3-S04</td><td>Shared contract MUST include entity_config_format + env_var_name BEFORE engineers dispatch.</td><td>adopted</td></tr><tr><td><b>v5</b></td><td>FY25-Q2-S05</td><td>COBOL packages take ~2x estimated effort - allocate 1.5x buffer.</td><td>adopted</td></tr><tr><td><b>v4</b></td><td>FY25-Q2-S02</td><td>QA must add at least 1 test per residual_hardcode_flagged by engineers.</td><td>adopted</td></tr><tr><td><b>v3</b></td><td>FY25-Q1-S05</td><td>Externalise regulator codes BEFORE booking centres - regulator drives suitability framework.</td><td>adopted</td></tr><tr><td><b>v2</b></td><td>FY25-Q1-S02</td><td>Pin canonical entity values in one source-of-truth file before parallel engineer dispatch.</td><td>adopted</td></tr><tr><td><b>v1</b></td><td>FY24-Q4-S08</td><td>CI gate on Decimal precision when refactoring fee logic.</td><td>adopted</td></tr></tbody></table>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-audit">
+          <div class="panel">
+            <h3>Audit - bundle contents</h3>
+            <p>Every file written during this run is downloadable below. Bundle zip: <a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/engineering-squad-bundle-wpm-3295-1782323759.zip" target="_blank" rel="noopener">https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/engineering-squad-bundle-wpm-3295-1782323759.zip</a></p>
+            <table><thead><tr><th>Path</th><th>Bytes</th><th>Link</th></tr></thead>
+            <tbody><tr><td><code>?</code></td><td>2805</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/01-prd.md" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>2414</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/02-business-analysis.md" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>3863</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/03-regulatory-delta.md" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>4627</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/04-architecture.md" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>3710</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/05-engineering-delegation.md" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>4191</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/07-qa-verification.md" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>4944</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/10-cycle-learnings.md" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>10202</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/10-cycle-learnings.json" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>8958</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/test-files/sql/migrations/verify_v2_entity_id.sql" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>7359</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/test-files/java/src/test/java/com/acme/wealth/EntityContextTest.java" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>7298</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/test-files/cobol/tests/SG_BASELINE_CHECK.txt" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>5273</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/test-files/python/tests/test_risk_report_entity_aware.py" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>958</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/docs/09-pull-requests-and-merge-summary.md" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>1766</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/00-run-manifest.json" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>3607</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-sql/sql/schema.sql" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>4233</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-sql/sql/migrations/V2__add_entity_id.sql" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>2951</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-java/java/src/main/java/com/acme/wealth/AccountController.java" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>1076</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-java/java/pom.xml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>3746</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-java/java/src/main/java/com/acme/wealth/EntityContext.java" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>372</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-java/java/src/main/resources/config/entity_SG.yaml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>368</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-java/java/src/main/resources/config/entity_HK.yaml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>374</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-java/java/src/main/resources/config/entity_CH.yaml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>6978</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-cobol/cobol/PORTVAL.cbl" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>2328</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-cobol/cobol/ENTITY-COPY.cpy" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>3312</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-python/python/risk_report.py" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>290</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-python/python/entities/SG.yaml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>287</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-python/python/entities/HK.yaml" target="_blank" rel="noopener">open</a></td></tr><tr><td><code>?</code></td><td>293</td><td><a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/wp-python/python/entities/CH.yaml" target="_blank" rel="noopener">open</a></td></tr></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <aside>
+        <div class="panel">
+          <h3>Quick links</h3>
+          <a href="https://wandplatform.atlassian.net/browse/WPM-3295" target="_blank" rel="noopener">Jira: WPM-3295</a>
+          <a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc" target="_blank" rel="noopener">GitHub repo</a>
+          <a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/bundles/wpm-3295/engineering-squad-bundle-wpm-3295-1782323759.zip" target="_blank" rel="noopener">Bundle zip</a>
+          <a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/vault/wpm-3295/v8.json" target="_blank" rel="noopener">Vault entry v8</a>
+          <a href="https://collab-ext-event.demo.wand.ai/api/matrix_client/storage/76ad9bc9-194d-57b0-a265-b4ee51c0ad98/019efabe-86e1-7446-84e1-30c1d6fd0fc9/static/uploads/vault/wpm-3295/index.json" target="_blank" rel="noopener">Vault index</a>
+        </div>
+        <div class="panel">
+          <h3>Notes (saved locally)</h3>
+          <textarea id="notes" placeholder="Reviewer notes - persisted in your browser"></textarea>
+          <p><button onclick="saveNotes()">Save</button>
+             <button class="ghost" onclick="clearNotes()">Clear</button></p>
+        </div>
+      </aside>
+    </main>
+    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, demo mode &middot; Generated 2026-06-24T17:57:33Z</footer>
+    <script>
+      function mermaidThemeVars(){
+        return document.body.classList.contains('light') ? {
+          primaryColor:'#ede9fe', primaryTextColor:'#0f0f1a', primaryBorderColor:'#8b5cf6',
+          lineColor:'#8b5cf6', secondaryColor:'#f3f3fb', tertiaryColor:'#fafafe',
+          fontFamily:'Inter, sans-serif'
+        } : {
+          primaryColor:'#1c1c2e', primaryTextColor:'#f0f0fa', primaryBorderColor:'#8b5cf6',
+          lineColor:'#a78bfa', secondaryColor:'#23233a', tertiaryColor:'#13131f',
+          clusterBkg:'#1c1c2e', clusterBorder:'#3a3a55', edgeLabelBackground:'#13131f',
+          fontFamily:'Inter, sans-serif'
+        };
+      }
+      // Stash raw mermaid source so we can re-render on theme toggle.
+      document.querySelectorAll('.mermaid').forEach(function(el){ el.dataset.src = el.textContent.trim(); });
+
+      // Render ALL Mermaid diagrams ONCE on page load.
+      // Briefly unhide every tab so Mermaid measures real widths,
+      // then restore hide state. Body is visibility:hidden during this.
+      function renderAllMermaid(){
+        var snapshot = [];
+        document.querySelectorAll('.tab-panel').forEach(function(p){
+          snapshot.push([p, p.classList.contains('hide')]);
+          p.classList.remove('hide');
+        });
+        mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: mermaidThemeVars() });
+        return mermaid.run({ querySelector: '.mermaid' }).finally(function(){
+          snapshot.forEach(function(s){ if (s[1]) s[0].classList.add('hide'); });
+          document.body.style.visibility = '';
+        });
+      }
+      renderAllMermaid().catch(function(err){
+        console.error('mermaid render error:', err);
+        document.body.style.visibility = '';
+      });
+      setTimeout(function(){ document.body.style.visibility = ''; }, 4000);
+
+      document.querySelectorAll('.tab').forEach(function(t){
+        t.addEventListener('click', function(){
+          document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+          t.classList.add('active');
+          var name = t.getAttribute('data-tab');
+          document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.add('hide'); });
+          document.getElementById('tab-' + name).classList.remove('hide');
+        });
+      });
+
+      // Re-render Mermaid when theme toggles so colors stay in sync.
+      document.querySelector('header .ghost').addEventListener('click', function(){
+        setTimeout(function(){
+          document.querySelectorAll('.mermaid').forEach(function(el){
+            el.removeAttribute('data-processed');
+            el.innerHTML = el.dataset.src || el.innerHTML;
+          });
+          renderAllMermaid();
+        }, 0);
+      });
+      var notesKey = 'wand-dash-notes-' + "WPM-3295";
+      function loadNotes(){ var v = localStorage.getItem(notesKey); if(v){ document.getElementById('notes').value = v; } }
+      function saveNotes(){ localStorage.setItem(notesKey, document.getElementById('notes').value); }
+      function clearNotes(){ localStorage.removeItem(notesKey); document.getElementById('notes').value = ''; }
+      loadNotes();
+    </script>
+    </body>
+    </html>
+    
