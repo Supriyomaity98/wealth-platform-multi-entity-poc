@@ -1,0 +1,24 @@
+entity:
+  entity_id: HK
+
+locale:
+  currency: HKD
+  default_locale: en_HK
+  supported_languages:
+    - en
+    - zh
+
+regulatory:
+  regulators:
+    - SFC
+  booking_centre: Hong Kong
+  disclosure_locale: en_HK
+
+product_rules:
+  advisory_fee_bps: 60
+  onboarding_threshold_minor_units: 1000000
+  suitability_framework: SFC_COP_2019
+
+infrastructure:
+  azure_region: eastasia
+  kv_vault_uri: ${KEYVAULT:wealth-hk-db-connection-string}
