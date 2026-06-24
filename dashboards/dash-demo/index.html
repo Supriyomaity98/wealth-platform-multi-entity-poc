@@ -103,13 +103,13 @@
       @media (max-width: 900px) { main { grid-template-columns: 1fr; } .grid-2, .grid-3 { grid-template-columns: 1fr; } .diff-cols { grid-template-columns: 1fr; } }
     </style>
     </head>
-    <body>
+    <body style="visibility:hidden">
     <header>
       <div class="brand">
         <div class="brand-mark">W</div>
         <div>
           <h1>Wand <span class="sub">/ Engineering Squad</span></h1>
-          <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T16:30:52Z &middot; <b>TEST &middot; SYNTHETIC DATA</b></div>
+          <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T16:37:28Z &middot; <b>TEST &middot; SYNTHETIC DATA</b></div>
         </div>
       </div>
       <div>
@@ -286,7 +286,7 @@
         </div>
       </aside>
     </main>
-    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T16:30:52Z</footer>
+    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T16:37:28Z</footer>
     <script>
       function mermaidThemeVars(){
         return document.body.classList.contains('light') ? {
@@ -300,22 +300,31 @@
           fontFamily:'Inter, sans-serif'
         };
       }
-      mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: mermaidThemeVars() });
       // Stash raw mermaid source so we can re-render on theme toggle.
       document.querySelectorAll('.mermaid').forEach(function(el){ el.dataset.src = el.textContent.trim(); });
 
-      // Lazy-render: only process .mermaid blocks once their tab is visible
-      // (Mermaid needs real container dimensions to size the SVG correctly).
-      function renderMermaidIn(panel){
-        if (!panel) return;
-        var els = panel.querySelectorAll('.mermaid:not([data-processed])');
-        if (els.length) {
-          mermaid.run({ nodes: Array.from(els) })
-            .catch(function(err){ console.error('mermaid render error:', err); });
-        }
+      // Render ALL Mermaid diagrams ONCE on page load.
+      // We briefly unhide every tab so Mermaid measures the real
+      // container width, then put the hide state back.
+      // Body is initially visibility:hidden so there's no flash.
+      function renderAllMermaid(){
+        var snapshot = [];
+        document.querySelectorAll('.tab-panel').forEach(function(p){
+          snapshot.push([p, p.classList.contains('hide')]);
+          p.classList.remove('hide');
+        });
+        mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: mermaidThemeVars() });
+        return mermaid.run({ querySelector: '.mermaid' }).finally(function(){
+          snapshot.forEach(function(s){ if (s[1]) s[0].classList.add('hide'); });
+          document.body.style.visibility = '';
+        });
       }
-      // Initial visible tab may have mermaid (currently it doesn't, but be safe).
-      renderMermaidIn(document.querySelector('.tab-panel:not(.hide)'));
+      renderAllMermaid().catch(function(err){
+        console.error('mermaid render error:', err);
+        document.body.style.visibility = '';
+      });
+      // Safety net: never leave body hidden if Mermaid never resolves.
+      setTimeout(function(){ document.body.style.visibility = ''; }, 4000);
 
       document.querySelectorAll('.tab').forEach(function(t){
         t.addEventListener('click', function(){
@@ -323,9 +332,7 @@
           t.classList.add('active');
           var name = t.getAttribute('data-tab');
           document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.add('hide'); });
-          var panel = document.getElementById('tab-' + name);
-          panel.classList.remove('hide');
-          renderMermaidIn(panel);
+          document.getElementById('tab-' + name).classList.remove('hide');
         });
       });
 
@@ -336,8 +343,7 @@
             el.removeAttribute('data-processed');
             el.innerHTML = el.dataset.src || el.innerHTML;
           });
-          mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: mermaidThemeVars() });
-          renderMermaidIn(document.querySelector('.tab-panel:not(.hide)'));
+          renderAllMermaid();
         }, 0);
       });
       var notesKey = 'wand-dash-notes-' + "DASH-DEMO";
