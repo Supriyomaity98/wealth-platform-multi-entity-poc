@@ -1,0 +1,16 @@
+# Entity: CH (Switzerland)
+# Deploy to: /etc/wealth/config/entity-CH.yaml
+# Secrets use Azure Key Vault references - never plaintext.
+
+currency_code:          CHF
+default_locale:         de_CH
+fee_bps:                80
+minimum_aum_threshold:  5000000
+data_region:            eu-west-1
+key_vault_name:         wealth-ch
+suitability_framework:  FINMA_LSFin_2020
+disclosure_locale:      de_CH
+primary_regulator:      FINMA
+supported_languages:    [de, fr, it, en]
+booking_centre:         Zurich
+db_password:            "${KEYVAULT:wealth-ch-db-password}"
