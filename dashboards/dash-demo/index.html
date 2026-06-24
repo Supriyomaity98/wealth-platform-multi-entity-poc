@@ -93,7 +93,9 @@
       button.ghost { background:transparent; color:var(--text); border:1px solid var(--border-strong); }
       button.ghost:hover { background:var(--panel-2); border-color:var(--acc); color:var(--acc-3); }
       footer { padding:16px 28px; color:var(--muted); font-size:11px; text-align:center; border-top:1px solid var(--border); letter-spacing:.02em; }
-      .hide { display:none; }
+      /* .hide moves panels off-screen but keeps them measurable so
+         Mermaid can render diagrams in hidden tabs at correct size. */
+      .hide { position:absolute; left:-99999px; top:0; visibility:hidden; }
       a { color:var(--acc-2); text-decoration:none; }
       a:hover { color:var(--acc-3); text-decoration:underline; }
       ::selection { background:var(--acc-glow); color:var(--text); }
@@ -106,7 +108,7 @@
         <div class="brand-mark">W</div>
         <div>
           <h1>Wand <span class="sub">/ Engineering Squad</span></h1>
-          <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T15:52:40Z &middot; <b>TEST &middot; SYNTHETIC DATA</b></div>
+          <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T16:25:04Z &middot; <b>TEST &middot; SYNTHETIC DATA</b></div>
         </div>
       </div>
       <div>
@@ -248,8 +250,8 @@
             <h3>Knowledge Vault - 8 entries (this cycle adds <b>v8</b>)</h3>
             <p>The Knowledge Vault persists every cycle's intelligence layer. Next cycle's Learning Advisor reads this before producing its own recommendations - the feedback loop.</p>
             <p>
-    <a href="https://supriyomaity98.github.io/wealth-platform-multi-entity-poc/dashboards/dash-demo/index.html" target="_blank" rel="noopener"><button>Open latest entry (v8)</button></a>
-    <a href="https://supriyomaity98.github.io/wealth-platform-multi-entity-poc/dashboards/dash-demo/index.html" target="_blank" rel="noopener"><button class="ghost">Open full index</button></a>
+    <a href="https://example.com/vault/v8" target="_blank" rel="noopener"><button>Open latest entry (v8)</button></a>
+    <a href="https://example.com/vault/index" target="_blank" rel="noopener"><button class="ghost">Open full index</button></a>
             </p>
             <table><thead><tr><th>Version</th><th>Sprint</th><th>Headline</th><th>Status</th></tr></thead>
             <tbody><tr><td><b>v8</b></td><td>FY26-Q2-S04</td><td>Auto-generate entity-*.yaml stubs from regulator code list before dispatch (THIS CYCLE).</td><td>new</td></tr><tr><td><b>v7</b></td><td>FY25-Q3-S08</td><td>QA test count &lt;= 6 per package correlates with residual hardcodes &gt;= 2. Floor at 8 tests when flagged.</td><td>adopted</td></tr><tr><td><b>v6</b></td><td>FY25-Q3-S04</td><td>Shared contract MUST include entity_config_format + env_var_name BEFORE engineers dispatch.</td><td>adopted</td></tr><tr><td><b>v5</b></td><td>FY25-Q2-S05</td><td>COBOL packages take ~2x estimated effort - allocate 1.5x buffer.</td><td>adopted</td></tr><tr><td><b>v4</b></td><td>FY25-Q2-S02</td><td>QA must add at least 1 test per residual_hardcode_flagged.</td><td>adopted</td></tr><tr><td><b>v3</b></td><td>FY25-Q1-S05</td><td>Externalise regulator codes BEFORE booking centres - regulator drives suitability framework.</td><td>adopted</td></tr><tr><td><b>v2</b></td><td>FY25-Q1-S02</td><td>Pin canonical entity values in one source-of-truth file before parallel engineer dispatch.</td><td>adopted</td></tr><tr><td><b>v1</b></td><td>FY24-Q4-S08</td><td>CI gate on Decimal precision when refactoring fee logic.</td><td>adopted</td></tr></tbody></table>
@@ -272,8 +274,8 @@
           <a href="https://jira.example.com/browse/DASH-DEMO" target="_blank" rel="noopener">Jira: DASH-DEMO</a>
           <a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc" target="_blank" rel="noopener">GitHub repo</a>
           <a href="https://example.com/wpm-bundle.zip" target="_blank" rel="noopener">Bundle zip</a>
-          <a href="https://supriyomaity98.github.io/wealth-platform-multi-entity-poc/dashboards/dash-demo/index.html" target="_blank" rel="noopener">Vault entry v8</a>
-          <a href="https://supriyomaity98.github.io/wealth-platform-multi-entity-poc/dashboards/dash-demo/index.html" target="_blank" rel="noopener">Vault index</a>
+          <a href="https://example.com/vault/v8" target="_blank" rel="noopener">Vault entry v8</a>
+          <a href="https://example.com/vault/index" target="_blank" rel="noopener">Vault index</a>
         </div>
         <div class="panel">
           <h3>Notes (saved locally)</h3>
@@ -283,7 +285,7 @@
         </div>
       </aside>
     </main>
-    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T15:52:40Z</footer>
+    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T16:25:04Z</footer>
     <script>
       function mermaidThemeVars(){
         return document.body.classList.contains('light') ? {
