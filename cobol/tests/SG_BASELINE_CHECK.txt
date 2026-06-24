@@ -1,0 +1,125 @@
+================================================================
+COBOL SANITY-CHECK SCRIPT — WP-COBOL ENTITY-CONTEXT REFACTOR
+Execute: review each check manually or via GnuCOBOL compile+run
+================================================================
+
+--------------------------------------------------------------
+TEST 1: SG_BASELINE_DEFAULT_CHECK
+Purpose: When ENTITY_ID env var is NOT set, program defaults
+         to SG with all canonical SG values.
+Setup:   unset ENTITY_ID
+Run:     cobc -x PORTVAL.cbl && ./PORTVAL
+Expect in working-storage / trace output:
+  WS-ENTITY-CODE         = 'SG'
+  WS-BASE-CURRENCY       = 'SGD'
+  WS-ENTITY-LOCALE       = 'en_SG'
+  WS-REGULATOR-CODE      = 'MAS'
+  WS-BOOKING-CENTRE      = 'Singapore'
+  WS-FEE-BPS             = 50
+  WS-LARGE-POS-THRESHOLD = 250000
+  WS-SUITABILITY-FW      = 'MAS_FAA_2002'
+  WS-ENT-KV-VAULT        = 'wealth-sg'
+  DB secret ref pattern  = '${KEYVAULT:wealth-sg-db-connection-string}'
+Verdict: PASS if all values match exactly.
+--------------------------------------------------------------
+
+--------------------------------------------------------------
+TEST 2: SG_EXPLICIT_CHECK
+Purpose: When ENTITY_ID is explicitly set to 'SG', same SG
+         canonical values are loaded (no difference from default).
+Setup:   export ENTITY_ID=SG
+Run:     cobc -x PORTVAL.cbl && ./PORTVAL
+Expect:  Identical to TEST 1 values above.
+Verdict: PASS if all values match TEST 1 exactly.
+--------------------------------------------------------------
+
+--------------------------------------------------------------
+TEST 3: HK_ENTITY_CHECK
+Purpose: When ENTITY_ID='HK', HK canonical values are loaded.
+Setup:   export ENTITY_ID=HK
+Run:     cobc -x PORTVAL.cbl && ./PORTVAL
+Expect in working-storage / trace output:
+  WS-ENTITY-CODE         = 'HK'
+  WS-BASE-CURRENCY       = 'HKD'
+  WS-ENTITY-LOCALE       = 'en_HK'
+  WS-REGULATOR-CODE      = 'SFC'
+  WS-BOOKING-CENTRE      = 'Hong Kong'
+  WS-FEE-BPS             = 60
+  WS-LARGE-POS-THRESHOLD = 1000000
+  WS-SUITABILITY-FW      = 'SFC_COP_2019'
+  WS-ENT-KV-VAULT        = 'wealth-hk'
+  DB secret ref pattern  = '${KEYVAULT:wealth-hk-db-connection-string}'
+Verdict: PASS if all values match exactly.
+--------------------------------------------------------------
+
+--------------------------------------------------------------
+TEST 4: CH_ENTITY_CHECK
+Purpose: When ENTITY_ID='CH', CH canonical values are loaded.
+Setup:   export ENTITY_ID=CH
+Run:     cobc -x PORTVAL.cbl && ./PORTVAL
+Expect in working-storage / trace output:
+  WS-ENTITY-CODE         = 'CH'
+  WS-BASE-CURRENCY       = 'CHF'
+  WS-ENTITY-LOCALE       = 'de_CH'
+  WS-REGULATOR-CODE      = 'FINMA'
+  WS-BOOKING-CENTRE      = 'Zurich'
+  WS-FEE-BPS             = 80
+  WS-LARGE-POS-THRESHOLD = 5000000
+  WS-SUITABILITY-FW      = 'FINMA_LSFin_2020'
+  WS-ENT-KV-VAULT        = 'wealth-ch'
+  DB secret ref pattern  = '${KEYVAULT:wealth-ch-db-connection-string}'
+Verdict: PASS if all values match exactly.
+--------------------------------------------------------------
+
+--------------------------------------------------------------
+TEST 5: MISSING_ENTITY_FALLBACK_SG
+Purpose: When ENTITY_ID is set to SPACES or LOW-VALUES or an
+         unrecognised value, program falls back to SG defaults.
+Setup:   export ENTITY_ID='  '   (two spaces)
+         -- also test with: export ENTITY_ID='XX'
+Run:     cobc -x PORTVAL.cbl && ./PORTVAL
+Expect:  All values identical to TEST 1 (SG baseline).
+         For 'XX': EVALUATE OTHER branch should also yield SG.
+Note:    Verify the EVALUATE statement has an OTHER clause
+         that defaults to SG. If no OTHER clause exists, this
+         is a defect — flag as FAIL.
+Verdict: PASS if fallback produces SG values.
+--------------------------------------------------------------
+
+--------------------------------------------------------------
+TEST 6: CROSS_ENTITY_DIFFER_CHECK
+Purpose: Confirm that SG, HK, and CH produce DIFFERENT values
+         for key fields — proves the EVALUATE branches diverge.
+Method:  Compare outputs from TEST 1, TEST 3, TEST 4.
+Assert:
+  a) WS-BASE-CURRENCY differs: SGD != HKD != CHF
+  b) WS-REGULATOR-CODE differs: MAS != SFC != FINMA
+  c) WS-FEE-BPS differs: 50 != 60 != 80
+  d) WS-LARGE-POS-THRESHOLD differs: 250000 != 1000000 != 5000000
+  e) WS-SUITABILITY-FW differs across all three
+  f) WS-ENT-KV-VAULT differs: wealth-sg != wealth-hk != wealth-ch
+Verdict: PASS if all six field-sets are pairwise distinct.
+--------------------------------------------------------------
+
+================================================================
+COMPILATION SANITY CHECK
+================================================================
+Command (GnuCOBOL):
+  cobc -x -I cobol/copybooks -I cobol PORTVAL.cbl
+Expect: Clean compile, return code 0, no warnings on:
+  - COPY ENTITY-COPY resolution
+  - COPY ENTITY-CONFIG resolution (if referenced)
+  - COPY ENTITY-OVERRIDE resolution (if referenced)
+  - FUNCTION GETENV (requires GnuCOBOL 3.x+ or IBM EE COBOL 6.4+)
+If GETENV is unsupported, flag compiler mismatch — see residual
+hardcode note in the refactor summary.
+================================================================
+
+SECRET LEAK CHECK
+================================================================
+Grep all .cbl and .cpy files for plaintext secrets:
+  grep -riE '(password|pwd|conn.*string.*=)' cobol/
+Expect: ZERO matches. All secrets must be vault references
+  matching pattern: ${KEYVAULT:wealth-(sg|hk|ch)-*}
+Verdict: PASS if no plaintext secrets found.
+================================================================
