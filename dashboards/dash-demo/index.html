@@ -106,7 +106,7 @@
         <div class="brand-mark">W</div>
         <div>
           <h1>Wand <span class="sub">/ Engineering Squad</span></h1>
-          <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T15:24:37Z &middot; <b>TEST &middot; SYNTHETIC DATA</b></div>
+          <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T15:29:33Z &middot; <b>TEST &middot; SYNTHETIC DATA</b></div>
         </div>
       </div>
       <div>
@@ -283,12 +283,10 @@
         </div>
       </aside>
     </main>
-    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T15:24:37Z</footer>
+    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T15:29:33Z</footer>
     <script>
-      mermaid.initialize({
-        startOnLoad: true,
-        theme: 'base',
-        themeVariables: document.body.classList.contains('light') ? {
+      function mermaidThemeVars(){
+        return document.body.classList.contains('light') ? {
           primaryColor:'#ede9fe', primaryTextColor:'#0f0f1a', primaryBorderColor:'#8b5cf6',
           lineColor:'#8b5cf6', secondaryColor:'#f3f3fb', tertiaryColor:'#fafafe',
           fontFamily:'Inter, sans-serif'
@@ -297,8 +295,15 @@
           lineColor:'#a78bfa', secondaryColor:'#23233a', tertiaryColor:'#13131f',
           clusterBkg:'#1c1c2e', clusterBorder:'#3a3a55', edgeLabelBackground:'#13131f',
           fontFamily:'Inter, sans-serif'
-        }
-      });
+        };
+      }
+      mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: mermaidThemeVars() });
+      // Stash raw mermaid source so we can re-render on theme toggle.
+      document.querySelectorAll('.mermaid').forEach(function(el){ el.dataset.src = el.textContent.trim(); });
+      // Explicit run() processes ALL .mermaid blocks regardless of display:none,
+      // so the Workflow / Architecture tabs render even while hidden in tabs.
+      mermaid.run({ querySelector: '.mermaid' }).catch(function(err){ console.error('mermaid render error:', err); });
+
       document.querySelectorAll('.tab').forEach(function(t){
         t.addEventListener('click', function(){
           document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
@@ -307,6 +312,18 @@
           document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.add('hide'); });
           document.getElementById('tab-' + name).classList.remove('hide');
         });
+      });
+
+      // Re-render Mermaid when theme toggles so colors stay in sync.
+      document.querySelector('header .ghost').addEventListener('click', function(){
+        setTimeout(function(){
+          document.querySelectorAll('.mermaid').forEach(function(el){
+            el.removeAttribute('data-processed');
+            el.innerHTML = el.dataset.src || el.innerHTML;
+          });
+          mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: mermaidThemeVars() });
+          mermaid.run({ querySelector: '.mermaid' });
+        }, 0);
       });
       var notesKey = 'wand-dash-notes-' + "DASH-DEMO";
       function loadNotes(){ var v = localStorage.getItem(notesKey); if(v){ document.getElementById('notes').value = v; } }
