@@ -1,0 +1,238 @@
+<!doctype html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Wand Engineering Squad - Run Dashboard - WPM-TEST</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.6/dist/mermaid.min.js"></script>
+    <style>
+      :root { color-scheme: light dark; --bg:#0b0f17; --panel:#121826; --panel-2:#1a2233; --text:#e5e9f0; --muted:#8893a8; --acc:#3b82f6; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --border:#243049; }
+      body.light { --bg:#f7f9fc; --panel:#ffffff; --panel-2:#eef2f8; --text:#101522; --muted:#566380; --border:#dde3ee; }
+      * { box-sizing: border-box; }
+      body { background:var(--bg); color:var(--text); font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; }
+      header { padding:18px 24px; background:var(--panel); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+      header h1 { margin:0; font-size:18px; }
+      header .meta { color:var(--muted); font-size:12px; }
+      main { padding:18px 24px; display:grid; grid-template-columns: 1fr 280px; gap:18px; }
+      .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-bottom:14px; }
+      .kpi { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+      .kpi .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+      .kpi .value { font-size:24px; font-weight:600; margin-top:4px; }
+      .tabs { display:flex; gap:6px; border-bottom:1px solid var(--border); margin-bottom:12px; flex-wrap:wrap; }
+      .tab { padding:8px 12px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; font-size:13px; }
+      .tab.active { color:var(--text); border-color:var(--acc); }
+      .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; }
+      .panel h3 { margin-top:0; }
+      .grid { display:grid; gap:12px; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .card { background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:12px; }
+      .card h4 { margin:0 0 8px; font-size:14px; }
+      .lang { font-size:11px; color:var(--muted); font-weight:normal; }
+      .kv { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); padding:2px 0; }
+      .kv b, .kv code { color:var(--text); }
+      table { width:100%; border-collapse:collapse; font-size:13px; }
+      th, td { text-align:left; padding:8px; border-bottom:1px solid var(--border); }
+      th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+      details.pr { background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin:8px 0; }
+      details.pr summary { cursor:pointer; font-size:14px; }
+      .status { font-size:11px; padding:2px 8px; border-radius:999px; margin-left:6px; }
+      .status-merged { background:rgba(34,197,94,.15); color:var(--ok); }
+      .status-open   { background:rgba(245,158,11,.15); color:var(--warn); }
+      .status-failed { background:rgba(239,68,68,.15); color:var(--err); }
+      .diff { margin-top:10px; }
+      .diff-file { font-family:ui-monospace,Menlo,monospace; font-size:12px; color:var(--muted); margin-bottom:6px; }
+      .diff-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .diff-cols h5 { margin:0 0 4px; font-size:12px; color:var(--muted); }
+      .diff pre { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px; font:12px/1.45 ui-monospace,Menlo,monospace; overflow:auto; max-height:280px; }
+      .prio { display:inline-block; font-size:10px; padding:1px 7px; border-radius:999px; margin-right:6px; font-weight:600; letter-spacing:.05em; }
+      .prio-P0, .prio-high   { background:rgba(239,68,68,.15); color:var(--err); }
+      .prio-P1, .prio-medium { background:rgba(245,158,11,.15); color:var(--warn); }
+      .prio-P2, .prio-low    { background:rgba(34,197,94,.15); color:var(--ok); }
+      aside { display:flex; flex-direction:column; gap:12px; }
+      aside .panel a { display:block; padding:6px 0; color:var(--acc); text-decoration:none; font-size:13px; border-bottom:1px solid var(--border); }
+      aside .panel a:last-child { border-bottom:0; }
+      .mermaid { background:var(--panel-2); border-radius:8px; padding:14px; }
+      ul { padding-left:18px; }
+      ul li { margin:4px 0; }
+      textarea { width:100%; min-height:80px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px; font:13px ui-monospace,Menlo,monospace; }
+      button { background:var(--acc); color:white; border:0; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
+      button.ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+      footer { padding:14px 24px; color:var(--muted); font-size:12px; text-align:center; border-top:1px solid var(--border); }
+      .hide { display:none; }
+      @media (max-width: 900px) { main { grid-template-columns: 1fr; } .grid-2, .grid-3 { grid-template-columns: 1fr; } .diff-cols { grid-template-columns: 1fr; } }
+    </style>
+    </head>
+    <body>
+    <header>
+      <div>
+        <h1>Wand Engineering Squad - Run Dashboard</h1>
+        <div class="meta">Ticket <a href="https://jira/WPM-TEST">WPM-TEST</a> &middot; Sprint FY25-Q4-S04-TEST &middot; Generated 2026-06-24T14:50:07Z</div>
+      </div>
+      <div>
+        <button class="ghost" onclick="document.body.classList.toggle('light')">Toggle theme</button>
+      </div>
+    </header>
+    <main>
+      <section>
+        <div class="kpis">
+          <div class="kpi"><div class="label">Agents in squad</div><div class="value">11</div></div>
+          <div class="kpi"><div class="label">Jira tickets</div><div class="value">1</div></div>
+          <div class="kpi"><div class="label">PRs opened</div><div class="value">0 / 0</div></div>
+          <div class="kpi"><div class="label">PRs merged</div><div class="value">0</div></div>
+          <div class="kpi"><div class="label">QA tests added</div><div class="value">0</div></div>
+          <div class="kpi"><div class="label">Human gates</div><div class="value">2 / 2</div></div>
+          <div class="kpi"><div class="label">Knowledge Vault</div><div class="value">0</div></div>
+        </div>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="overview">Overview</div>
+          <div class="tab" data-tab="workflow">Workflow</div>
+          <div class="tab" data-tab="architecture">Architecture</div>
+          <div class="tab" data-tab="squad">Squad</div>
+          <div class="tab" data-tab="prs">PRs &amp; Diffs</div>
+          <div class="tab" data-tab="qa">QA</div>
+          <div class="tab" data-tab="learning">Learning cycle</div>
+          <div class="tab" data-tab="vault">Knowledge Vault</div>
+          <div class="tab" data-tab="audit">Audit</div>
+        </div>
+
+        <div class="tab-panel" id="tab-overview">
+          <div class="panel">
+            <h3>Executive summary</h3>
+            <p>(no advisor summary)</p>
+            <div class="grid grid-3">
+    <div class="card"><h4>Outcome</h4>0 of 0 PRs merged to main. 0 opened, 0 QA tests added.</div>
+    <div class="card"><h4>Entities live</h4>SG, HK, CH (home: SG)</div>
+    <div class="card"><h4>Savings projected</h4>0 hours saved next cycle (low confidence, payoff in 0 cycle(s))</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-workflow">
+          <div class="panel"><h3>Workflow</h3><div class="mermaid">flowchart LR
+  S["Setup"] --> PO["Product Owner"]
+  PO --> BA["Business Analyst"]
+  BA --> REG["Regulatory SME"]
+  REG --> SA["Solution Architect"]
+  SA --> EM["Engineering Manager"]
+  EM --> ENG["Senior Engineers x1<br/>(parallel)"]
+  ENG --> QA["QA Engineer"]
+  QA --> CI["CI Checks"]
+  CI --> G2["Gate 2: PR review"]
+  G2 --> CL["Capture Learnings"]
+  CL --> BUN["Bundle"]
+  BUN --> G3["Gate 3: Merge"]
+  G3 --> MRG["Merge PRs"]
+  MRG --> LA["Learning Advisor"]
+  LA --> VAU["Knowledge Vault"]
+  VAU --> DASH["Dashboard"]
+  DASH --> EMAIL["Final Email"]</div></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-architecture">
+          <div class="panel"><h3>Architecture</h3><div class="mermaid">flowchart LR
+  subgraph CFG["Per-entity configs"]
+    SG["SG.yaml"]
+    HK["HK.yaml"]
+    CH["CH.yaml"]
+  end
+  CFG --> CTX["EntityContext / Resolver"]
+  CTX --> APP["wealth-platform app code<br/>(entity-aware)"]
+  APP --> KV["Azure Key Vault<br/>(secret refs)"]
+  APP --> DB["DB schema<br/>(entity_id column)"]</div></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-squad">
+          <div class="panel"><h3>Squad - 1 engineers + PO/BA/Reg/SA/EM/QA/CoS</h3>
+            <div class="grid grid-3"><div class="card"><h4>Diego <span class="lang">[Python]</span></h4><div class="kv"><span>Package</span><b>WP-PYTHON</b></div><div class="kv"><span>Branch</span><code>refactor/python-entity-context</code></div><div class="kv"><span>Files</span>2</div><div class="kv"><span>+lines</span>48</div><div class="kv"><span>-lines</span>22</div></div></div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-prs">
+          <div class="panel"><h3>Pull requests &amp; sample diffs</h3><p>No PRs recorded.</p></div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-qa">
+          <div class="panel"><h3>QA per package</h3>
+            <table><thead><tr><th>Package</th><th>Lang</th><th>Verdict</th><th>Tests</th><th>Notes</th></tr></thead>
+            <tbody><tr><td colspan='5'>No QA verdicts recorded.</td></tr></tbody></table>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-learning">
+          <div class="panel">
+            <h3>Learning cycle - intelligence layer</h3>
+            <p><b>Executive summary:</b> (no advisor summary)</p>
+            <div class="grid grid-2">
+    <div class="card"><h4>Observations</h4><ul><li>(none)</li></ul></div>
+    <div class="card"><h4>Patterns detected</h4><ul><li>(none)</li></ul></div>
+    <div class="card"><h4>Recommendations (ranked)</h4><ul><li>(none)</li></ul></div>
+    <div class="card"><h4>Guardrails for next cycle</h4><ul><li>(none)</li></ul></div>
+    <div class="card"><h4>Risk flags</h4><ul><li>(none)</li></ul></div>
+    <div class="card"><h4>Estimated savings</h4><p><b>0</b> hours / cycle, payoff in <b>0</b> cycle(s), confidence <b>low</b>.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-vault">
+          <div class="panel">
+            <h3>Knowledge Vault - 0 entries (this cycle adds <b>v?</b>)</h3>
+            <p>The Knowledge Vault persists every cycle's intelligence layer. Next cycle's Learning Advisor reads this before producing its own recommendations - the feedback loop.</p>
+            <p>
+    <a href="#" target="_blank" rel="noopener"><button>Open latest entry (v?)</button></a>
+    <a href="#" target="_blank" rel="noopener"><button class="ghost">Open full index</button></a>
+            </p>
+            <table><thead><tr><th>Version</th><th>Sprint</th><th>Headline</th><th>Status</th></tr></thead>
+            <tbody><tr><td colspan='4'>No vault history.</td></tr></tbody></table>
+          </div>
+        </div>
+
+        <div class="tab-panel hide" id="tab-audit">
+          <div class="panel">
+            <h3>Audit - bundle contents</h3>
+            <p>Every file written during this run is downloadable below. Bundle zip: <a href="#" target="_blank" rel="noopener">#</a></p>
+            <table><thead><tr><th>Path</th><th>Bytes</th><th>Link</th></tr></thead>
+            <tbody><tr><td colspan='3'>No bundle files recorded.</td></tr></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <aside>
+        <div class="panel">
+          <h3>Quick links</h3>
+          <a href="https://jira/WPM-TEST" target="_blank" rel="noopener">Jira: WPM-TEST</a>
+          <a href="https://github.com/Supriyomaity98/wealth-platform-multi-entity-poc" target="_blank" rel="noopener">GitHub repo</a>
+          <a href="#" target="_blank" rel="noopener">Bundle zip</a>
+          <a href="#" target="_blank" rel="noopener">Vault entry v?</a>
+          <a href="#" target="_blank" rel="noopener">Vault index</a>
+        </div>
+        <div class="panel">
+          <h3>Notes (saved locally)</h3>
+          <textarea id="notes" placeholder="Reviewer notes - persisted in your browser"></textarea>
+          <p><button onclick="saveNotes()">Save</button>
+             <button class="ghost" onclick="clearNotes()">Clear</button></p>
+        </div>
+      </aside>
+    </main>
+    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, demo mode &middot; Generated 2026-06-24T14:50:07Z</footer>
+    <script>
+      mermaid.initialize({ startOnLoad: true, theme: document.body.classList.contains('light') ? 'default' : 'dark' });
+      document.querySelectorAll('.tab').forEach(function(t){
+        t.addEventListener('click', function(){
+          document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+          t.classList.add('active');
+          var name = t.getAttribute('data-tab');
+          document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.add('hide'); });
+          document.getElementById('tab-' + name).classList.remove('hide');
+        });
+      });
+      var notesKey = 'wand-dash-notes-' + "WPM-TEST";
+      function loadNotes(){ var v = localStorage.getItem(notesKey); if(v){ document.getElementById('notes').value = v; } }
+      function saveNotes(){ localStorage.setItem(notesKey, document.getElementById('notes').value); }
+      function clearNotes(){ localStorage.removeItem(notesKey); document.getElementById('notes').value = ''; }
+      loadNotes();
+    </script>
+    </body>
+    </html>
+    
