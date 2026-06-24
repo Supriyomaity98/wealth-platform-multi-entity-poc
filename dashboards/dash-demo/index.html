@@ -93,9 +93,10 @@
       button.ghost { background:transparent; color:var(--text); border:1px solid var(--border-strong); }
       button.ghost:hover { background:var(--panel-2); border-color:var(--acc); color:var(--acc-3); }
       footer { padding:16px 28px; color:var(--muted); font-size:11px; text-align:center; border-top:1px solid var(--border); letter-spacing:.02em; }
-      /* .hide moves panels off-screen but keeps them measurable so
-         Mermaid can render diagrams in hidden tabs at correct size. */
-      .hide { position:absolute; left:-99999px; top:0; visibility:hidden; }
+      /* .hide simply hides inactive tabs. Mermaid is rendered LAZILY
+         when each tab becomes visible (see script below) so we don't
+         have to fight Mermaid's measurement of offscreen containers. */
+      .hide { display:none; }
       a { color:var(--acc-2); text-decoration:none; }
       a:hover { color:var(--acc-3); text-decoration:underline; }
       ::selection { background:var(--acc-glow); color:var(--text); }
@@ -108,7 +109,7 @@
         <div class="brand-mark">W</div>
         <div>
           <h1>Wand <span class="sub">/ Engineering Squad</span></h1>
-          <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T16:25:04Z &middot; <b>TEST &middot; SYNTHETIC DATA</b></div>
+          <div class="meta">Ticket <a href="https://jira.example.com/browse/DASH-DEMO">DASH-DEMO</a> &middot; Sprint FY26-Q2-S04 &middot; Generated 2026-06-24T16:30:52Z &middot; <b>TEST &middot; SYNTHETIC DATA</b></div>
         </div>
       </div>
       <div>
@@ -285,7 +286,7 @@
         </div>
       </aside>
     </main>
-    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T16:25:04Z</footer>
+    <footer>Wand Engineering Squad &middot; Run dashboard &middot; Synthetic data, test workflow &middot; Generated 2026-06-24T16:30:52Z</footer>
     <script>
       function mermaidThemeVars(){
         return document.body.classList.contains('light') ? {
@@ -302,9 +303,19 @@
       mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: mermaidThemeVars() });
       // Stash raw mermaid source so we can re-render on theme toggle.
       document.querySelectorAll('.mermaid').forEach(function(el){ el.dataset.src = el.textContent.trim(); });
-      // Explicit run() processes ALL .mermaid blocks regardless of display:none,
-      // so the Workflow / Architecture tabs render even while hidden in tabs.
-      mermaid.run({ querySelector: '.mermaid' }).catch(function(err){ console.error('mermaid render error:', err); });
+
+      // Lazy-render: only process .mermaid blocks once their tab is visible
+      // (Mermaid needs real container dimensions to size the SVG correctly).
+      function renderMermaidIn(panel){
+        if (!panel) return;
+        var els = panel.querySelectorAll('.mermaid:not([data-processed])');
+        if (els.length) {
+          mermaid.run({ nodes: Array.from(els) })
+            .catch(function(err){ console.error('mermaid render error:', err); });
+        }
+      }
+      // Initial visible tab may have mermaid (currently it doesn't, but be safe).
+      renderMermaidIn(document.querySelector('.tab-panel:not(.hide)'));
 
       document.querySelectorAll('.tab').forEach(function(t){
         t.addEventListener('click', function(){
@@ -312,7 +323,9 @@
           t.classList.add('active');
           var name = t.getAttribute('data-tab');
           document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.add('hide'); });
-          document.getElementById('tab-' + name).classList.remove('hide');
+          var panel = document.getElementById('tab-' + name);
+          panel.classList.remove('hide');
+          renderMermaidIn(panel);
         });
       });
 
@@ -324,7 +337,7 @@
             el.innerHTML = el.dataset.src || el.innerHTML;
           });
           mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: mermaidThemeVars() });
-          mermaid.run({ querySelector: '.mermaid' });
+          renderMermaidIn(document.querySelector('.tab-panel:not(.hide)'));
         }, 0);
       });
       var notesKey = 'wand-dash-notes-' + "DASH-DEMO";
