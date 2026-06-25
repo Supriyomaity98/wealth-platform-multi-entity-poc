@@ -1,44 +1,75 @@
-"""Risk reporting module — Singapore deployment.
+"""Risk reporting module — multi-entity deployment.
 
-All module-level constants represent the live SG entity configuration.
-These constants are the primary refactoring target for the multi-agent
-workflow that will introduce entity-aware configuration for HK and CH.
+Entity configuration is loaded at module start from YAML files in the
+`entities/` directory.  The active entity is selected via the
+ACME_ENTITY_ID environment variable (default: "SG" for backward
+compatibility with the Singapore baseline).
+
+Module-level symbols exposed for external consumers:
+  CURRENCY, LOCALE, REGULATOR, BOOKING_CENTRE, MGMT_FEE_BPS,
+  LARGE_POSITION_THRESHOLD, SUITABILITY_FRAMEWORK,
+  DB_CONNECTION_SECRET, is_large_position(), management_fee()
 """
 
+import os
 from decimal import Decimal
+from python.entity_context import EntityContext
 
-ENTITY_CODE = "SG"
-ENTITY_NAME = "Singapore"
-REGULATOR = "MAS"
-CURRENCY = "SGD"
-LOCALE = "en_SG"
-DATA_REGION = "ap-southeast-1"
-MGMT_FEE_BPS = Decimal("50")
-LARGE_POSITION_THRESHOLD = Decimal("250000")
-SUITABILITY_FRAMEWORK = "MAS-Notice-FAA"
+_entity_id = os.environ.get("ACME_ENTITY_ID", "SG")
+_ctx = EntityContext(_entity_id)
+
+# --- Module-level symbols (required contract) --------------------------
+CURRENCY: str = _ctx.currency
+LOCALE: str = _ctx.locale
+REGULATOR: str = _ctx.regulator
+BOOKING_CENTRE: str = _ctx.booking_centre
+MGMT_FEE_BPS: Decimal = _ctx.fee_bps
+LARGE_POSITION_THRESHOLD: Decimal = _ctx.large_position_threshold
+SUITABILITY_FRAMEWORK: str = _ctx.suitability_framework
+DB_CONNECTION_SECRET: str = _ctx.db_connection_secret
+
+# Legacy aliases kept for SG backward-compat
+ENTITY_CODE: str = _ctx.entity_id
+ENTITY_NAME: str = _ctx.booking_centre
+DATA_REGION: str = _ctx.data_region
 
 
-def management_fee(market_value: Decimal) -> Decimal:
-    """Compute annual management fee at the Singapore schedule (50 bps)."""
-    return (market_value * MGMT_FEE_BPS / Decimal("10000")).quantize(Decimal("0.01"))
+def is_large_position(value: Decimal) -> bool:
+    """Return True when *value* meets or exceeds the entity threshold."""
+    return value >= LARGE_POSITION_THRESHOLD
 
 
-def is_reportable(market_value: Decimal) -> bool:
-    """Return True if position exceeds the Singapore large-position threshold."""
-    return market_value >= LARGE_POSITION_THRESHOLD
+# Keep legacy name for SG baseline
+is_reportable = is_large_position
+
+
+def management_fee(notional: Decimal) -> Decimal:
+    """Compute annual management fee using the entity fee schedule."""
+    return (notional * MGMT_FEE_BPS / Decimal("10000")).quantize(Decimal("0.01"))
 
 
 def disclosure_text() -> str:
-    """Return the MAS Notice FAA disclosure string for reportable positions."""
-    return (
-        "MAS Notice FAA: Past performance is not indicative of future results. "
-        "Investments involve risk."
-    )
+    """Return entity-appropriate disclosure string."""
+    _disclosures = {
+        "MAS": (
+            "MAS Notice FAA: Past performance is not indicative of "
+            "future results. Investments involve risk."
+        ),
+        "SFC": (
+            "SFC Code of Conduct: Past performance is not indicative "
+            "of future results. Investments involve risk."
+        ),
+        "FINMA": (
+            "FINMA LSFin: Past performance is not indicative of "
+            "future results. Investments involve risk."
+        ),
+    }
+    return _disclosures.get(REGULATOR, "")
 
 
 def build_report(portfolio_id: str, market_value: Decimal) -> dict:
     """Build a risk report dict for the given portfolio."""
-    reportable = is_reportable(market_value)
+    reportable = is_large_position(market_value)
     return {
         "portfolio_id": portfolio_id,
         "entity_code": ENTITY_CODE,
