@@ -1,0 +1,122 @@
+============================================================
+COBOL PORTVAL / ENTITY-COPY SANITY CHECK
+Senior QA Engineer — WP-COBOL iteration
+Canonical values pinned per task specification.
+============================================================
+
+TC01 SG_BASELINE_ENTITY_FIELDS
+-------------------------------
+PRECONDITION : ACME_ENTITY_ID=SG  (or unset — see TC04)
+PARAGRAPH    : 0500-LOAD-ENTITY-CONTEXT executes EVALUATE WS-ENV-ENTITY
+               WHEN 'SG' branch fires.
+ASSERT WS-ENTITY-CODE        = 'SG'
+ASSERT WS-CURRENCY           = 'SGD'
+ASSERT WS-LOCALE             = 'en_SG'
+ASSERT WS-REGULATOR          = 'MAS'
+ASSERT WS-BOOKING-CENTRE     = 'Singapore'
+ASSERT WS-FEE-BPS            = 50
+ASSERT WS-LARGE-POS-THRESH   = 250000
+ASSERT WS-SUITABILITY-FWK    = 'MAS_FAA_2002'
+ASSERT WS-KV-VAULT-NAME      = 'wealth-sg'
+ASSERT WS-KV-DB-CONN CONTAINS '${KEYVAULT:wealth-sg-db-connection-string}'
+RESULT: PASS if all fields match exactly.
+
+TC02 HK_ENTITY_FIELDS
+----------------------
+PRECONDITION : ACME_ENTITY_ID=HK
+PARAGRAPH    : 0500-LOAD-ENTITY-CONTEXT WHEN 'HK' branch fires.
+ASSERT WS-ENTITY-CODE        = 'HK'
+ASSERT WS-CURRENCY           = 'HKD'
+ASSERT WS-LOCALE             = 'en_HK'
+ASSERT WS-REGULATOR          = 'SFC'
+ASSERT WS-BOOKING-CENTRE     = 'Hong Kong'
+ASSERT WS-FEE-BPS            = 60
+ASSERT WS-LARGE-POS-THRESH   = 1000000
+ASSERT WS-SUITABILITY-FWK    = 'SFC_COP_2019'
+ASSERT WS-KV-VAULT-NAME      = 'wealth-hk'
+ASSERT WS-KV-DB-CONN CONTAINS '${KEYVAULT:wealth-hk-db-connection-string}'
+RESULT: PASS if all fields match exactly.
+NOTE: WS-DISCLOSURE-TEXT is placeholder — Compliance must confirm.
+
+TC03 CH_ENTITY_FIELDS
+----------------------
+PRECONDITION : ACME_ENTITY_ID=CH
+PARAGRAPH    : 0500-LOAD-ENTITY-CONTEXT WHEN 'CH' branch fires.
+ASSERT WS-ENTITY-CODE        = 'CH'
+ASSERT WS-CURRENCY           = 'CHF'
+ASSERT WS-LOCALE             = 'de_CH'
+ASSERT WS-REGULATOR          = 'FINMA'
+ASSERT WS-BOOKING-CENTRE     = 'Zurich'
+ASSERT WS-FEE-BPS            = 80
+ASSERT WS-LARGE-POS-THRESH   = 5000000
+ASSERT WS-SUITABILITY-FWK    = 'FINMA_LSFin_2020'
+ASSERT WS-KV-VAULT-NAME      = 'wealth-ch'
+ASSERT WS-KV-DB-CONN CONTAINS '${KEYVAULT:wealth-ch-db-connection-string}'
+RESULT: PASS if all fields match exactly.
+NOTE: WS-DISCLOSURE-TEXT is placeholder — Compliance must confirm.
+
+TC04 MISSING_ENTITY_DEFAULTS_TO_SG
+-----------------------------------
+PRECONDITION : ACME_ENTITY_ID is unset (ACCEPT FROM ENVIRONMENT returns
+               spaces / low-values).
+EXPECTED     : 0500-LOAD-ENTITY-CONTEXT sets WS-ENV-ENTITY = 'SG'
+               before EVALUATE, so WHEN 'SG' branch fires.
+ASSERT WS-ENTITY-CODE        = 'SG'
+ASSERT WS-CURRENCY           = 'SGD'
+ASSERT WS-REGULATOR          = 'MAS'
+ASSERT WS-FEE-BPS            = 50
+ASSERT WS-LARGE-POS-THRESH   = 250000
+ASSERT WS-KV-VAULT-NAME      = 'wealth-sg'
+RESULT: PASS if default fallback produces identical output to TC01.
+CRITICAL: Verify MOVE 'SG' TO WS-ENV-ENTITY fires when env var is
+          SPACES — inspect paragraph source before sign-off.
+
+TC05 SG_HK_CURRENCY_DIFFER
+---------------------------
+PRECONDITION : Run TC01 result vs TC02 result.
+ASSERT TC01.WS-CURRENCY NOT EQUAL TC02.WS-CURRENCY
+  (expected: 'SGD' != 'HKD')
+ASSERT TC01.WS-FEE-BPS  NOT EQUAL TC02.WS-FEE-BPS
+  (expected: 50 != 60)
+ASSERT TC01.WS-LARGE-POS-THRESH NOT EQUAL TC02.WS-LARGE-POS-THRESH
+  (expected: 250000 != 1000000)
+ASSERT TC01.WS-REGULATOR NOT EQUAL TC02.WS-REGULATOR
+  (expected: 'MAS' != 'SFC')
+PURPOSE: Confirms per-entity EVALUATE branches genuinely diverge;
+         guards against copy-paste where all WHEN clauses set SG values.
+RESULT: PASS if all four pairs differ as expected.
+
+TC06 KV_SECRET_REF_NO_PLAINTEXT
+--------------------------------
+PRECONDITION : Inspect WORKING-STORAGE and 0500-LOAD-ENTITY-CONTEXT
+               source text via grep / source scan.
+ASSERT source does NOT contain any of:
+  - 'jdbc:'
+  - 'Password='
+  - 'password='
+  - 'SERVER='
+  - any string matching pattern [A-Za-z0-9]{8,}@[a-z].*\.database
+  - plaintext connection string keywords
+ASSERT WS-KV-DB-CONN VALUE at compile time is SPACES or
+  a '${KEYVAULT:...}' reference template only.
+ASSERT runtime MOVE into WS-KV-DB-CONN uses entity-specific
+  vault reference: '${KEYVAULT:wealth-{entity_id}-db-connection-string}'
+RESULT: PASS if zero plaintext secrets found in source.
+TOOL   : grep -n -E '(jdbc:|[Pp]assword=|SERVER=)' cobol/PORTVAL.cbl
+          grep -n -E '(jdbc:|[Pp]assword=|SERVER=)' cobol/ENTITY-COPY.cpy
+          Exit code 1 (no matches) = PASS.
+
+============================================================
+SUMMARY CHECKLIST (all must be PASS for PR merge)
+============================================================
+[ ] TC01 SG baseline fields match canonical spec exactly
+[ ] TC02 HK fields match canonical spec exactly
+[ ] TC03 CH fields match canonical spec exactly
+[ ] TC04 Unset env var defaults to SG — verify source paragraph
+[ ] TC05 SG vs HK fields genuinely diverge on 4 key fields
+[ ] TC06 Zero plaintext secrets in source — grep exit=1
+[ ] OPEN ITEM: HK/CH WS-DISCLOSURE-TEXT confirmed by Compliance
+[ ] OPEN ITEM: ACCEPT FROM ENVIRONMENT dialect verified for
+    target compiler (IBM Enterprise COBOL required; MicroFocus
+    needs adjustment per engineer residual flag)
+============================================================
