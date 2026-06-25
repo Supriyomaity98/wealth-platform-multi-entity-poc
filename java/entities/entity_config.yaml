@@ -1,0 +1,42 @@
+entities:
+  - entity_id: SG
+    currency: SGD
+    locale: en_SG
+    regulator: MAS
+    booking_centre: Singapore
+    fee_bps: 50
+    large_position_threshold: 250000
+    min_balance: 0
+    data_region: ap-southeast-1
+    kms_vault_name: wealth-sg
+    suitability_framework: MAS_FAA_2002
+    disclosure_locale: en_SG
+    audit_log_policy: standard
+
+  - entity_id: HK
+    currency: HKD
+    locale: en_HK
+    regulator: SFC
+    booking_centre: Hong Kong
+    fee_bps: 60
+    large_position_threshold: 1000000
+    min_balance: 0
+    data_region: ap-east-1
+    kms_vault_name: wealth-hk
+    suitability_framework: SFC_COP_2019
+    disclosure_locale: en_HK
+    audit_log_policy: standard
+
+  - entity_id: CH
+    currency: CHF
+    locale: de_CH
+    regulator: FINMA
+    booking_centre: Zurich
+    fee_bps: 80
+    large_position_threshold: 5000000
+    min_balance: 0
+    data_region: eu-central-1
+    kms_vault_name: wealth-ch
+    suitability_framework: FINMA_LSFin_2020
+    disclosure_locale: de_CH
+    audit_log_policy: standard
