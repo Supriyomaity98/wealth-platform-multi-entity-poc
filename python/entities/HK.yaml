@@ -1,0 +1,14 @@
+# Entity configuration — Hong Kong
+entity_id: HK
+currency: HKD
+locale: en_HK
+regulator: SFC
+booking_centre: Hong Kong
+fee_bps: 60
+large_position_threshold: 1000000
+min_balance: 0
+data_region: ap-east-1
+kms_vault_name: wealth-hk
+suitability_framework: SFC_COP_2019
+disclosure_locale: en_HK
+audit_log_policy: standard
